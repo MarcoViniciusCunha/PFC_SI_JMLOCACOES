@@ -1,5 +1,6 @@
 package com.nozama.aluguel_veiculos.config;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -26,14 +27,29 @@ public class Jwt {
                 .compact(); // Constrói o token final em string
     }
 
-
+    // recupera o email do token
     public String getEmailFromToken(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    // verifica se o token è válido
+    public boolean validateToken(String token) {
+        try {
+            getClaims(token); // se n tiver exceção, é valido
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+    }
+
+    // auxilia na extração dos claims
+    private io.jsonwebtoken.Claims getClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey) // usa a chave para validar a assinatura
                 .build()
                 .parseClaimsJws(token) // analisa o token e valida assinatura
-                .getBody() // pega o corpo do token
-                .getSubject(); // retorna o subject email
+                .getBody(); // pega o corpo do token
     }
 
 }

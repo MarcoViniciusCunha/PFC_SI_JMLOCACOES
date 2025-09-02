@@ -1,5 +1,6 @@
 package com.nozama.aluguel_veiculos.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,6 +14,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity // segurança web do spring security
 public class SecurityConfig {
+
+    @Autowired
+    private JwtFilter jwtFilter;
 
     // codificar senhas com bcrypt e mandar para o banco
     @Bean
@@ -28,7 +32,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/**", "/login").permitAll() // define rotas user e login n precisam autenticar
                         .anyRequest().authenticated() // resto das rotas precisa de autenticação
-                );
+                )
+                .addFilterBefore(jwtFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+
         return http.build(); // constrói e retorna filtro de segurança
     }
 }
