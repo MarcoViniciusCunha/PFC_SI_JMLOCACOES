@@ -1,6 +1,6 @@
 CREATE TABLE Insurence (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nome VARCHAR(255) NOT NULL,
-    datafim_contrato DATE,
-    venc_pagto DATE
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    empresa VARCHAR(255) NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    validade DATE NOT NULL
 );
