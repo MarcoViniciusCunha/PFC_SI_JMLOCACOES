@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @RestController
-@RequestMapping("/insurence")
+@RequestMapping("/insurance")
 public class InsuranceController {
 
     private final InsuranceService service;

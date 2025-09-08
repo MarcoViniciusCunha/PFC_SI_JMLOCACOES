@@ -4,8 +4,10 @@ import com.nozama.aluguel_veiculos.domain.category.Category;
 import com.nozama.aluguel_veiculos.dto.CategoryRequest;
 import com.nozama.aluguel_veiculos.services.CategoryService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/categories")
@@ -22,15 +24,11 @@ public class CategoryController {
         return ResponseEntity.ok().body(category);
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<Category> getByName(@RequestBody @Valid CategoryRequest categoryRequest) {
-        var category = categoryService.getByName(categoryRequest.nome());
-
-        if (category.isPresent()) {
-            return ResponseEntity.ok().body(category.get());
-        }
-
-        return ResponseEntity.status(404).build();
+    @GetMapping("/search/{nome}")
+    public ResponseEntity<Category> getByName(@PathVariable String nome) {
+        return categoryService.getByName(nome)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada!"));
     }
 
     @PutMapping("/{id}")

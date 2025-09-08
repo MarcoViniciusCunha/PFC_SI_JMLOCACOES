@@ -27,7 +27,7 @@ public class CategoryService {
         return repository.save(new Category(categoryRequest));
     }
 
-    public Optional<Category> getByName( String name) {
+    public Optional<Category> getByName(String name) {
         return repository.findByNome(name);
     }
 
