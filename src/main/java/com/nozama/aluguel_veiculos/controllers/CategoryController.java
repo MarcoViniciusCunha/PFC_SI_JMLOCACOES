@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {
@@ -22,6 +24,11 @@ public class CategoryController {
     public ResponseEntity<Category> create(@RequestBody @Valid CategoryRequest categoryRequest) {
         Category category = categoryService.create(categoryRequest);
         return ResponseEntity.ok().body(category);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Category>> getAll() {
+        return ResponseEntity.ok(categoryService.findAll());
     }
 
     @GetMapping("/search/{nome}")
