@@ -1,0 +1,10 @@
+CREATE TABLE Customer (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cnh VARCHAR(20) UNIQUE NOT NULL,
+    nome VARCHAR(255) NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    telefone VARCHAR(20),
+    endereco VARCHAR(255),
+    data_nasc DATE
+);

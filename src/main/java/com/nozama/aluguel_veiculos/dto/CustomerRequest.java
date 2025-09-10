@@ -1,0 +1,32 @@
+package com.nozama.aluguel_veiculos.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.LocalDate;
+
+public record CustomerRequest(
+
+        @NotBlank(message = "Informe a cnh.")
+        String cnh,
+
+        @NotBlank(message = "Informe o nome.")
+        String nome,
+
+        @NotBlank(message = "Informe o cpf.")
+        String cpf,
+
+        @NotBlank(message = "Informe o email.")
+        String email,
+
+        @NotBlank(message = "Informe o telefone.")
+        String telefone,
+
+        @NotBlank(message = "Informe o endereço.")
+        String endereco,
+
+        @NotNull(message = "Informe a data de nascimento.")
+        LocalDate data_nasc
+
+) {
+}
