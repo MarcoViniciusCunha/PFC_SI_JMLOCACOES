@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "insurence")
+@Table(name = "insurance")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,7 +19,7 @@ import java.time.LocalDate;
 public class Insurance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer Id;
+    private Integer id;
 
     private String empresa;
 

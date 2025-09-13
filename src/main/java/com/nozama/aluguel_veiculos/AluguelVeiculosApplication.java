@@ -1,12 +1,7 @@
 package com.nozama.aluguel_veiculos;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
 
 @SpringBootApplication
 public class AluguelVeiculosApplication {

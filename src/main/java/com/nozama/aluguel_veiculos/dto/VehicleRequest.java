@@ -25,9 +25,10 @@ public record VehicleRequest(
         @NotBlank(message = "De uma descrição mais detalhada sobre o veículo")
         String descricao,
 
-        @NotNull(message = "Informe a categoria do veículo")
+        @NotNull(message = "Informe a categoria do veículo.")
         Integer idCategoria,
 
+        @NotNull(message = "Informe o seguro do veículo.")
         Integer idSeguro
 ) {
 }
