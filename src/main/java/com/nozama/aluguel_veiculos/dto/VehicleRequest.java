@@ -7,8 +7,8 @@ public record VehicleRequest(
         @NotBlank(message = "Informe a placa do veículo.")
         String placa,
 
-        @NotBlank(message = "Informe a marca do veículo.")
-        String marca,
+        @NotNull(message = "Informe a marca do veículo.")
+        Integer idMark,
 
         @NotBlank(message = "Informe o modelo do veículo.")
         String modelo,

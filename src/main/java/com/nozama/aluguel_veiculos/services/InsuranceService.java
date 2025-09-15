@@ -22,7 +22,7 @@ public class InsuranceService {
     }
 
     public Insurance create(InsuranceRequest request){
-        Insurance insurance = new Insurance();
+        Insurance insurance = new Insurance(request);
         insurance.setEmpresa(request.empresa());
         insurance.setValor(request.valor());
         insurance.setValidade(request.validade());

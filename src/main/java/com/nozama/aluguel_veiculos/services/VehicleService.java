@@ -7,10 +7,12 @@ import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import com.nozama.aluguel_veiculos.repository.CategoryRepository;
 import com.nozama.aluguel_veiculos.repository.InsuranceRepository;
+import com.nozama.aluguel_veiculos.repository.MarkRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ReflectionUtils;
+import com.nozama.aluguel_veiculos.domain.mark.Mark;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Field;
@@ -23,11 +25,13 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final CategoryRepository categoryRepository;
     private final InsuranceRepository insuranceRepository;
+    private final MarkRepository markRepository;
 
-    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository) {
+    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository, MarkRepository markRepository) {
         this.vehicleRepository = vehicleRepository;
         this.categoryRepository = categoryRepository;
         this.insuranceRepository = insuranceRepository;
+        this.markRepository = markRepository;
     }
 
     public Vehicle create(VehicleRequest request){
@@ -40,7 +44,13 @@ public class VehicleService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seguro não encontrado"));
         }
 
-        Vehicle vehicle = new Vehicle(request, category, insurance);
+        Mark mark = null;
+        if (request.idMark() != null){
+            mark = markRepository.findById(request.idMark())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrado"));
+        }
+
+        Vehicle vehicle = new Vehicle(request, category, insurance, mark);
         return vehicleRepository.save(vehicle);
     }
 
@@ -63,6 +73,7 @@ public class VehicleService {
         return vehicles;
     }
 
+    @Transactional
     public Vehicle updateVehicle(String placa, VehiclePatchRequest request) {
         Vehicle vehicle = vehicleRepository.findById(placa)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
@@ -80,6 +91,11 @@ public class VehicleService {
             Category category = categoryRepository.findById(request.idCategoria())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada."));
             vehicle.setCategory(category);
+        }
+        if (request.idMark() != null){
+            Mark mark = markRepository.findById(request.idMark())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada."));
+            vehicle.setMark(mark);
         }
         if (request.idSeguro() != null){
             Insurance insurance = insuranceRepository.findById(request.idSeguro())

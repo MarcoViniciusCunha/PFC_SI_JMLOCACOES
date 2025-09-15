@@ -2,6 +2,7 @@ package com.nozama.aluguel_veiculos.domain.vehicle;
 
 import com.nozama.aluguel_veiculos.domain.category.Category;
 import com.nozama.aluguel_veiculos.domain.insurence.Insurance;
+import com.nozama.aluguel_veiculos.domain.mark.Mark;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,9 @@ public class Vehicle {
     @Id
     private String placa;
 
-    private String marca;
+    @ManyToOne
+    @JoinColumn(name = "id_mark", nullable = false)
+    private Mark mark;
 
     private String modelo;
 
@@ -39,10 +42,10 @@ public class Vehicle {
     @JoinColumn(name = "id_seguro")
     private Insurance insurance;
 
-    public Vehicle(VehicleRequest request, Category category, Insurance insurance){
+    public Vehicle(VehicleRequest request, Category category, Insurance insurance, Mark mark){
         this.placa = request.placa();
 
-        this.marca = request.marca();
+        this.mark = mark;
 
         this.modelo = request.modelo();
 
