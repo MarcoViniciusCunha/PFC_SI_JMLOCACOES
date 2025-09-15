@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.controllers;
 
-import com.nozama.aluguel_veiculos.domain.category.Category;
+import com.nozama.aluguel_veiculos.domain.Category;
 import com.nozama.aluguel_veiculos.dto.CategoryRequest;
 import com.nozama.aluguel_veiculos.services.CategoryService;
 import jakarta.validation.Valid;

@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.services;
 
-import com.nozama.aluguel_veiculos.domain.category.Category;
+import com.nozama.aluguel_veiculos.domain.Category;
 import com.nozama.aluguel_veiculos.dto.CategoryRequest;
 import com.nozama.aluguel_veiculos.repository.CategoryRepository;
 import org.springframework.http.HttpStatus;

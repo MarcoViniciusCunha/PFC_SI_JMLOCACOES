@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.controllers;
 
-import com.nozama.aluguel_veiculos.domain.insurence.Insurance;
+import com.nozama.aluguel_veiculos.domain.Insurance;
 import com.nozama.aluguel_veiculos.dto.InsuranceRequest;
 import com.nozama.aluguel_veiculos.services.InsuranceService;
 import jakarta.validation.Valid;

@@ -10,14 +10,14 @@ public record VehicleRequest(
         @NotNull(message = "Informe a marca do veículo.")
         Integer idMark,
 
-        @NotBlank(message = "Informe o modelo do veículo.")
-        String modelo,
+        @NotNull(message = "Informe a marca do veículo.")
+        Integer idModelo,
 
         @NotNull(message = "Informe o ano do veículo.")
         Integer ano,
 
-        @NotBlank(message = "Informe a cor do veículo.")
-        String cor,
+        @NotNull(message = "Informe a cor do veículo.")
+        Integer idCor,
 
         @NotBlank(message = "Informe o status do veículo.")
         String status,

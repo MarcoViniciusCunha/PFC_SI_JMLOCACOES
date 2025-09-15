@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.controllers;
 
-import com.nozama.aluguel_veiculos.domain.user.User;
+import com.nozama.aluguel_veiculos.domain.User;
 import com.nozama.aluguel_veiculos.dto.UserRequest;
 import com.nozama.aluguel_veiculos.services.UserService;
 import jakarta.validation.Valid;

@@ -1,4 +1,4 @@
-package com.nozama.aluguel_veiculos.domain.user;
+package com.nozama.aluguel_veiculos.domain;
 
 import com.nozama.aluguel_veiculos.dto.UserRequest;
 import jakarta.persistence.Entity;

@@ -1,9 +1,11 @@
 package com.nozama.aluguel_veiculos.controllers;
 
+import com.nozama.aluguel_veiculos.dto.MarkRequest;
 import com.nozama.aluguel_veiculos.repository.MarkRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.nozama.aluguel_veiculos.domain.mark.Mark;
+import com.nozama.aluguel_veiculos.domain.Mark;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +21,8 @@ public class MarkController {
     }
 
     @PostMapping
-    public ResponseEntity<Mark> create(@RequestBody Mark mark) {
+    public ResponseEntity<Mark> create(@RequestBody @Valid MarkRequest request) {
+        Mark mark = new Mark(request);
         Mark saved = repository.save(mark);
         return ResponseEntity.ok().body(saved);
     }

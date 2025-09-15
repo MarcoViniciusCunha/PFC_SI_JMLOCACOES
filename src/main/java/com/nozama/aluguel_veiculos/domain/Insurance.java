@@ -1,4 +1,4 @@
-package com.nozama.aluguel_veiculos.domain.insurence;
+package com.nozama.aluguel_veiculos.domain;
 
 import com.nozama.aluguel_veiculos.dto.InsuranceRequest;
 import jakarta.persistence.*;

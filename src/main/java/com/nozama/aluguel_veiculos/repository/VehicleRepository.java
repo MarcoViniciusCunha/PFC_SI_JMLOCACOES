@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.repository;
 
-import com.nozama.aluguel_veiculos.domain.vehicle.Vehicle;
+import com.nozama.aluguel_veiculos.domain.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

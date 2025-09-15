@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.services;
 
-import com.nozama.aluguel_veiculos.domain.customer.Customer;
+import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerPatchRequest;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;

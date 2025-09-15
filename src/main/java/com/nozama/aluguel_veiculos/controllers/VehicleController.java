@@ -1,15 +1,15 @@
 package com.nozama.aluguel_veiculos.controllers;
 
-import com.nozama.aluguel_veiculos.domain.vehicle.Vehicle;
+import com.nozama.aluguel_veiculos.domain.Vehicle;
 import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import com.nozama.aluguel_veiculos.services.VehicleService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/vehicles")
@@ -23,7 +23,8 @@ public class VehicleController {
 
     @PostMapping
     public ResponseEntity<Vehicle> create(@RequestBody @Valid VehicleRequest request){
-        return ResponseEntity.ok(service.create(request));
+        Vehicle saved = service.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @GetMapping
@@ -48,7 +49,7 @@ public class VehicleController {
     }
 
     @DeleteMapping("/{placa}")
-    public ResponseEntity<Vehicle> delete(@PathVariable String placa){
+    public ResponseEntity<Void> delete(@PathVariable String placa){
         service.delete(placa);
         return ResponseEntity.ok().build();
     }

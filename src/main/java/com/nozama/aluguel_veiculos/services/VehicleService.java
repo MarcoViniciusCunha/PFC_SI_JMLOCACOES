@@ -1,23 +1,15 @@
 package com.nozama.aluguel_veiculos.services;
 
-import com.nozama.aluguel_veiculos.domain.category.Category;
-import com.nozama.aluguel_veiculos.domain.insurence.Insurance;
-import com.nozama.aluguel_veiculos.domain.vehicle.Vehicle;
+import com.nozama.aluguel_veiculos.domain.*;
 import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
-import com.nozama.aluguel_veiculos.repository.CategoryRepository;
-import com.nozama.aluguel_veiculos.repository.InsuranceRepository;
-import com.nozama.aluguel_veiculos.repository.MarkRepository;
-import com.nozama.aluguel_veiculos.repository.VehicleRepository;
+import com.nozama.aluguel_veiculos.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import com.nozama.aluguel_veiculos.domain.mark.Mark;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class VehicleService {
@@ -26,12 +18,16 @@ public class VehicleService {
     private final CategoryRepository categoryRepository;
     private final InsuranceRepository insuranceRepository;
     private final MarkRepository markRepository;
+    private final ColorRepository colorRepository;
+    private final ModelRepository modelRepository;
 
-    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository, MarkRepository markRepository) {
+    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository, MarkRepository markRepository, ColorRepository colorRepository, ModelRepository modelRepository) {
         this.vehicleRepository = vehicleRepository;
         this.categoryRepository = categoryRepository;
         this.insuranceRepository = insuranceRepository;
         this.markRepository = markRepository;
+        this.colorRepository = colorRepository;
+        this.modelRepository = modelRepository;
     }
 
     public Vehicle create(VehicleRequest request){
@@ -50,7 +46,19 @@ public class VehicleService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrado"));
         }
 
-        Vehicle vehicle = new Vehicle(request, category, insurance, mark);
+        Color color = null;
+        if (request.idCor() != null){
+            color = colorRepository.findById(request.idCor())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cor não encontrado"));
+        }
+
+        Model model = null;
+        if (request.idModelo() != null){
+            model = modelRepository.findById(request.idModelo())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado"));
+        }
+
+        Vehicle vehicle = new Vehicle(request, category, insurance, mark, color, model);
         return vehicleRepository.save(vehicle);
     }
 
@@ -78,9 +86,6 @@ public class VehicleService {
         Vehicle vehicle = vehicleRepository.findById(placa)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
 
-        if (request.cor() != null){
-            vehicle.setCor(request.cor());
-        }
         if (request.status() != null){
             vehicle.setStatus(request.status());
         }
@@ -102,7 +107,16 @@ public class VehicleService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seguro não encontrado."));
             vehicle.setInsurance(insurance);
         }
-
+        if (request.idCor() != null){
+            Color color = colorRepository.findById(request.idCor())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cor não encontrada."));
+            vehicle.setColor(color);
+        }
+        if (request.idModelo() != null){
+            Model model = modelRepository.findById(request.idModelo())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado."));
+            vehicle.setModel(model);
+        }
         return vehicleRepository.save(vehicle);
     }
 
