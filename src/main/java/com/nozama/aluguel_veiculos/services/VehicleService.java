@@ -1,6 +1,7 @@
 package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.*;
+import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import com.nozama.aluguel_veiculos.repository.*;
@@ -87,7 +88,7 @@ public class VehicleService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
 
         if (request.status() != null){
-            vehicle.setStatus(request.status());
+            vehicle.setStatus(VehicleStatus.valueOf(request.status().toUpperCase()));
         }
         if (request.descricao() != null){
             vehicle.setDescricao(request.descricao());

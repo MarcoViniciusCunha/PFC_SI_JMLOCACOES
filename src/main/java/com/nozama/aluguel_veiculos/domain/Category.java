@@ -18,10 +18,14 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true, nullable = false)
     private String nome;
 
+    private String descricao;
+
     public Category(CategoryRequest categoryRequest) {
+
         this.nome = categoryRequest.nome();
+        this.descricao = categoryRequest.descricao();
+
     }
 }

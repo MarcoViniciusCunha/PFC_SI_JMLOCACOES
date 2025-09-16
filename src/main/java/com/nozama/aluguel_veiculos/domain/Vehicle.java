@@ -1,5 +1,6 @@
 package com.nozama.aluguel_veiculos.domain;
 
+import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -31,7 +32,8 @@ public class Vehicle {
     @JoinColumn(name = "id_cor", nullable = false)
     private Color color;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private VehicleStatus status = VehicleStatus.DISPONIVEL;
 
     private String descricao;
 
@@ -54,7 +56,7 @@ public class Vehicle {
 
         this.color = color;
 
-        this.status = request.status();
+        this.status = VehicleStatus.valueOf(request.status().toUpperCase());
 
         this.descricao = request.descricao();
 
