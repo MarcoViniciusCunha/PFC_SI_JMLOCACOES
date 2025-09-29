@@ -12,17 +12,17 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "email") // gera equals e hash baseados em email
+@EqualsAndHashCode(of = "username") // gera equals e hash baseados em email
 public class User {
 
     // email pk
     @Id
-    private String email;
+    private String username;
 
     private String password;
 
     public User(UserRequest userRequest) {
-        this.email = userRequest.email();
+        this.username = userRequest.username();
 
         this.password = userRequest.password();
 

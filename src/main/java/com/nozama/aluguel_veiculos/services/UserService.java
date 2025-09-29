@@ -22,7 +22,7 @@ public class UserService {
     // recebe dados via UserRequest
     public User create(UserRequest userRequest) {
         User user = new User();
-        user.setEmail(userRequest.email());
+        user.setUsername(userRequest.username());
         //  codifica a senha para salva-la
         user.setPassword(passwordEncoder.encode(userRequest.password()));
         // retorna user criado
@@ -34,8 +34,8 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    // busca user pelo email
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email);
+    // busca user pelo username
+    public User getUserByEmail(String username) {
+        return userRepository.findByUsername(username);
     }
 }

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "mark")
+@Table(name = "brand")
 @Getter
 @Setter
 @NoArgsConstructor

@@ -19,7 +19,7 @@ public class Vehicle {
     private String placa;
 
     @ManyToOne
-    @JoinColumn(name = "id_mark", nullable = false)
+    @JoinColumn(name = "id_brand", nullable = false)
     private Brand brand;
 
     @ManyToOne

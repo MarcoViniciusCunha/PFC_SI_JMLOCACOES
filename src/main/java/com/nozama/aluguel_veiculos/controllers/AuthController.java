@@ -32,7 +32,7 @@ public class AuthController {
     @PostMapping //Post para autenticação
     public ResponseEntity<?> login(@RequestBody @Valid UserRequest loginRequest) {
         // busca no bd pelo email informado
-        User user = userRepository.findByEmail(loginRequest.email());
+        User user = userRepository.findByUsername(loginRequest.username());
 
         // se user n existe ou senha n é igual retorna erro 401 e mensagem
         if(user == null || !passwordEncoder.matches(loginRequest.password(), user.getPassword())){
@@ -40,7 +40,7 @@ public class AuthController {
         }
 
         // gera token com base no email
-        String token = jwt.generateToken(user.getEmail());
+        String token = jwt.generateToken(user.getUsername());
         // retorna o token com resposta 200 0k
         return ResponseEntity.ok(new LoginResponse(token));
     }

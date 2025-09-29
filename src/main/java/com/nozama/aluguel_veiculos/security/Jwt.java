@@ -14,12 +14,12 @@ public class Jwt {
     // Gera uma chave secreta unica com o algoritmo 256
     private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
-    // gera com base no email
-    public String generateToken(String email) {
+    // gera com base no username
+    public String generateToken(String username) {
         //Define tempo de expiração do token
         long expiration = 1000 * 60 * 60;
         return Jwts.builder()
-                .setSubject(email) // identificador do usuario
+                .setSubject(username) // identificador do usuario
                 .setIssuedAt(new Date()) // Data de emissão do token
                 .setExpiration(new Date(System.currentTimeMillis() + expiration)) // Data q expira
                 .signWith(secretKey) //Coloca a chave secreta no token
@@ -27,7 +27,7 @@ public class Jwt {
     }
 
     // recupera o email do token
-    public String getEmailFromToken(String token) {
+    public String getUserFromToken(String token) {
         return getClaims(token).getSubject();
     }
 
