@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.domain;
 
-import com.nozama.aluguel_veiculos.dto.MarkRequest;
+import com.nozama.aluguel_veiculos.dto.BrandRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,14 +13,14 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Mark {
+public class Brand {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String nome;
 
-    public Mark(MarkRequest request) {
+    public Brand(BrandRequest request) {
         this.nome = request.nome();
     }
 }

@@ -1,4 +1,4 @@
-package com.nozama.aluguel_veiculos.config;
+package com.nozama.aluguel_veiculos.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,6 +25,14 @@ public class JwtFilter extends OncePerRequestFilter {
                                   HttpServletResponse response,
                                   FilterChain filterChain)
         throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+
+        // ignora endpoints públicos
+        if (path.startsWith("/login") || path.startsWith("/user")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // pega o cabeçalho authorization de onde o token vem
         String authHeader = request.getHeader("Authorization");

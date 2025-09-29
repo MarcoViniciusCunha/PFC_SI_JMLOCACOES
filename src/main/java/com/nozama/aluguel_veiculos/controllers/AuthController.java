@@ -1,6 +1,6 @@
 package com.nozama.aluguel_veiculos.controllers;
 
-import com.nozama.aluguel_veiculos.config.Jwt;
+import com.nozama.aluguel_veiculos.security.Jwt;
 import com.nozama.aluguel_veiculos.domain.User;
 import com.nozama.aluguel_veiculos.dto.LoginResponse;
 import com.nozama.aluguel_veiculos.dto.UserRequest;
@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/login") // endpoints /login
@@ -34,7 +36,7 @@ public class AuthController {
 
         // se user n existe ou senha n é igual retorna erro 401 e mensagem
         if(user == null || !passwordEncoder.matches(loginRequest.password(), user.getPassword())){
-            return ResponseEntity.status(401).body("Email ou senha inválidos.");
+            return ResponseEntity.status(401).body(Map.of("message", "Email ou senha inválidos."));
         }
 
         // gera token com base no email

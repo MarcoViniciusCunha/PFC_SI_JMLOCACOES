@@ -18,11 +18,11 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final CategoryRepository categoryRepository;
     private final InsuranceRepository insuranceRepository;
-    private final MarkRepository markRepository;
+    private final BrandRepository markRepository;
     private final ColorRepository colorRepository;
     private final ModelRepository modelRepository;
 
-    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository, MarkRepository markRepository, ColorRepository colorRepository, ModelRepository modelRepository) {
+    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository, BrandRepository markRepository, ColorRepository colorRepository, ModelRepository modelRepository) {
         this.vehicleRepository = vehicleRepository;
         this.categoryRepository = categoryRepository;
         this.insuranceRepository = insuranceRepository;
@@ -41,9 +41,9 @@ public class VehicleService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seguro não encontrado"));
         }
 
-        Mark mark = null;
-        if (request.idMark() != null){
-            mark = markRepository.findById(request.idMark())
+        Brand mark = null;
+        if (request.idMarca() != null){
+            mark = markRepository.findById(request.idMarca())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrado"));
         }
 
@@ -98,10 +98,10 @@ public class VehicleService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada."));
             vehicle.setCategory(category);
         }
-        if (request.idMark() != null){
-            Mark mark = markRepository.findById(request.idMark())
+        if (request.idMarca() != null){
+            Brand mark = markRepository.findById(request.idMarca())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada."));
-            vehicle.setMark(mark);
+            vehicle.setBrand(mark);
         }
         if (request.idSeguro() != null){
             Insurance insurance = insuranceRepository.findById(request.idSeguro())
@@ -117,6 +117,9 @@ public class VehicleService {
             Model model = modelRepository.findById(request.idModelo())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado."));
             vehicle.setModel(model);
+        }
+        if (request.ano() != null){
+            vehicle.setAno(request.ano());
         }
         return vehicleRepository.save(vehicle);
     }

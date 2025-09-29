@@ -32,21 +32,25 @@ public class CategoryService {
         return repository.findAll();
     }
 
-    public Optional<Category> getByName(String name) {
-        return repository.findByNome(name);
-    }
-
-    public Category putById(int id, String name) {
+    public Category patchById(int id, CategoryRequest request) {
         Category category = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada!"));
 
-        repository.findByNome(name).ifPresent(existing -> {
-            if (!existing.getId().equals(id)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Categoria '" + name + "' já existe!");
-            }
-        });
+        if (request.nome() != null && !request.nome().isBlank()) {
+            repository.findByNome(request.nome()).ifPresent(existing -> {
+                if (!existing.getId().equals(id)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Categoria '" + request.nome() + "' já existe!");
+                }
+            });
+            category.setNome(request.nome());
+        }
 
-        category.setNome(name);
+        // Atualiza a descrição apenas se vier no request
+        if (request.descricao() != null) {
+            category.setDescricao(request.descricao());
+        }
+
         return repository.save(category);
     }
 

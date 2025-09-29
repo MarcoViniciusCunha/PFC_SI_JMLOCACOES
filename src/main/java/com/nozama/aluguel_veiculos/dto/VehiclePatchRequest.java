@@ -1,12 +1,13 @@
 package com.nozama.aluguel_veiculos.dto;
 
 public record VehiclePatchRequest(
-        Integer idMark,
+        Integer idMarca,
         Integer idCor,
         Integer idModelo,
         String status,
         String descricao,
         Integer idCategoria,
-        Integer idSeguro
+        Integer idSeguro,
+        Integer ano
 ) {
 }

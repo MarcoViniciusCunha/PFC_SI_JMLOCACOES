@@ -20,7 +20,7 @@ public class Vehicle {
 
     @ManyToOne
     @JoinColumn(name = "id_mark", nullable = false)
-    private Mark mark;
+    private Brand brand;
 
     @ManyToOne
     @JoinColumn(name = "id_modelo", nullable = false)
@@ -45,10 +45,10 @@ public class Vehicle {
     @JoinColumn(name = "id_seguro")
     private Insurance insurance;
 
-    public Vehicle(VehicleRequest request, Category category, Insurance insurance, Mark mark, Color color, Model model){
+    public Vehicle(VehicleRequest request, Category category, Insurance insurance, Brand brand, Color color, Model model){
         this.placa = request.placa();
 
-        this.mark = mark;
+        this.brand = brand;
 
         this.model = model;
 
