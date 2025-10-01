@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.Model;
 import com.nozama.aluguel_veiculos.dto.ModelRequest;
 import com.nozama.aluguel_veiculos.repository.ModelRepository;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,11 @@ public class ModelController {
     }
 
     @PostMapping
-    public ResponseEntity<Model> create (@RequestBody @Valid ModelRequest request) {
+    public ResponseEntity<?> create (@RequestBody @Valid ModelRequest request) {
+        if (repository.existsByNome(request.nome())){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Modelo '" + request.nome() + "' já existe!");
+        }
+
         Model model = new Model(request);
         Model saved = repository.save(model);
         return ResponseEntity.ok().body(saved);

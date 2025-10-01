@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.Color;
 import com.nozama.aluguel_veiculos.dto.ColorRequest;
 import com.nozama.aluguel_veiculos.repository.ColorRepository;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,11 @@ public class ColorController {
     }
 
     @PostMapping
-    public ResponseEntity<Color> create(@RequestBody @Valid ColorRequest request) {
+    public ResponseEntity<?> create(@RequestBody @Valid ColorRequest request) {
+        if (repository.existsByNome(request.nome())){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Cor '" + request.nome() + "' já existe!");
+        }
+
         Color color = new Color(request);
         Color saved = repository.save(color);
         return ResponseEntity.ok().body(saved);

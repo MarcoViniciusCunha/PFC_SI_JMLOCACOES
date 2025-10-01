@@ -21,13 +21,13 @@ public class UserController {
 
     @PostMapping //endpoint para criar usúario
     // busca dados do userRequest
-    public ResponseEntity<User> createUser(@RequestBody @Valid UserRequest userRequest) {
+    public ResponseEntity<?> createUser(@RequestBody @Valid UserRequest userRequest) {
         try {
             // chama o serviço q cria o usúario
             User user = userService.create(userRequest);
             return ResponseEntity.status(201).body(user); // retorna 201 com o user no body
         } catch (Exception e){
-            return ResponseEntity.status(400).build(); // se der erro
+            return ResponseEntity.status(400).body(e.getMessage()); // se der erro
         }
     }
 
