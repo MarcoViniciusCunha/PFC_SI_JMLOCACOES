@@ -30,6 +30,12 @@ public class CustomerController {
         return ResponseEntity.ok(service.getAll());
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<Customer>> getByName(@RequestParam String nome){
+        List<Customer> customers = service.getByName(nome);
+        return ResponseEntity.ok(customers);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getById(@PathVariable Long id){
         return ResponseEntity.ok(service.getById(id));

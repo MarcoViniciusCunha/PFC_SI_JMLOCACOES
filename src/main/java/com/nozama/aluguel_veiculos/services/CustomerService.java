@@ -39,6 +39,14 @@ public class CustomerService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
     }
 
+    public List<Customer> getByName(String nome){
+       List<Customer> customers = repository.findByNomeContainingIgnoreCase(nome);
+       if (customers.isEmpty()){
+           throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não existe cliente com esse nome.");
+       }
+       return customers;
+    }
+
     public Customer update(Long id, CustomerPatchRequest request){
         Customer existing = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));

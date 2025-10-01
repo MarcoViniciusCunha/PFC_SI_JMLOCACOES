@@ -21,6 +21,10 @@ public class UserService {
     // criar novo user no sistema
     // recebe dados via UserRequest
     public User create(UserRequest userRequest) {
+        if (userRepository.count() > 0){
+            throw new RuntimeException("Já existe um usúario cadastrado. Não é permitido criar outro.");
+        }
+
         User user = new User();
         user.setUsername(userRequest.username());
         //  codifica a senha para salva-la

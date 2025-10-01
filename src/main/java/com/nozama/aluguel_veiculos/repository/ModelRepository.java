@@ -4,4 +4,5 @@ import com.nozama.aluguel_veiculos.domain.Model;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ModelRepository extends JpaRepository<Model, Integer> {
+    boolean existsByNome(String nome);
 }
