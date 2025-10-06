@@ -1,7 +1,10 @@
 package com.nozama.aluguel_veiculos.controllers;
 
+import com.nozama.aluguel_veiculos.domain.Brand;
 import com.nozama.aluguel_veiculos.domain.Model;
+import com.nozama.aluguel_veiculos.dto.ModelPatchRequest;
 import com.nozama.aluguel_veiculos.dto.ModelRequest;
+import com.nozama.aluguel_veiculos.repository.BrandRepository;
 import com.nozama.aluguel_veiculos.repository.ModelRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -16,9 +19,11 @@ import java.util.Optional;
 public class ModelController {
 
     private final ModelRepository repository;
+    private final BrandRepository brandRepository;
 
-    public ModelController(ModelRepository repository) {
+    public ModelController(ModelRepository repository, BrandRepository brandRepository) {
         this.repository = repository;
+        this.brandRepository = brandRepository;
     }
 
     @PostMapping
@@ -27,7 +32,12 @@ public class ModelController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Modelo '" + request.nome() + "' já existe!");
         }
 
-        Model model = new Model(request);
+        Optional<Brand> brand = brandRepository.findById(request.brandId());
+        if (brand.isEmpty()) {
+            return ResponseEntity.badRequest().body("Marca não encontrada.");
+        }
+
+        Model model = new Model(request, brand.get());
         Model saved = repository.save(model);
         return ResponseEntity.ok().body(saved);
     }
@@ -43,16 +53,27 @@ public class ModelController {
         return existing.isPresent() ? ResponseEntity.ok().body(existing.get()) : ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Model> update(@PathVariable Integer id, @RequestBody ModelRequest request) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody ModelPatchRequest request) {
         Optional<Model> existing = repository.findById(id);
-        if (existing.isPresent()) {
-            Model exist = existing.get();
-            exist.setNome(request.nome());
-            Model saved = repository.save(exist);
-            return ResponseEntity.ok().body(saved);
+        if (existing.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Modelo não encontrado.");
         }
-        return ResponseEntity.notFound().build();
+
+        Model model = existing.get();
+
+        if (request.nome() != null && !request.nome().isBlank()) {
+            model.setNome(request.nome());
+        }
+
+        if (request.brandId() != null) {
+            Optional<Brand> brand = brandRepository.findById(request.brandId());
+            if (brand.isEmpty()) return ResponseEntity.badRequest().body("Marca não encontrada.");
+            model.setBrand(brand.get());
+        }
+
+        Model saved = repository.save(model);
+        return ResponseEntity.ok().body(saved);
     }
 
     @DeleteMapping("/{id}")

@@ -3,6 +3,10 @@ package com.nozama.aluguel_veiculos.repository;
 import com.nozama.aluguel_veiculos.domain.Model;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface ModelRepository extends JpaRepository<Model, Integer> {
     boolean existsByNome(String nome);
+
+    List<Model> findByBrandId(Integer brandId);
 }

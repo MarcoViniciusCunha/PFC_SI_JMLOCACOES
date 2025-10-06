@@ -1,7 +1,9 @@
 package com.nozama.aluguel_veiculos.controllers;
 
+import com.nozama.aluguel_veiculos.domain.Model;
 import com.nozama.aluguel_veiculos.dto.BrandRequest;
 import com.nozama.aluguel_veiculos.repository.BrandRepository;
+import com.nozama.aluguel_veiculos.repository.ModelRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,11 @@ import java.util.Optional;
 public class BrandController {
 
     private final BrandRepository repository;
+    private final ModelRepository modelRepository;
 
-    public BrandController(BrandRepository repository) {
+    public BrandController(BrandRepository repository, ModelRepository modelRepository) {
         this.repository = repository;
+        this.modelRepository = modelRepository;
     }
 
     @PostMapping
@@ -44,6 +48,12 @@ public class BrandController {
             return ResponseEntity.ok().body(existing.get());
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{brandId}/models")
+    public ResponseEntity<List<Model>> getModelsByBrand(@PathVariable Integer brandId) {
+        List<Model> modelos = modelRepository.findByBrandId(brandId);
+        return ResponseEntity.ok(modelos);
     }
 
     @PutMapping("/{id}")

@@ -1,5 +1,6 @@
 package com.nozama.aluguel_veiculos.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.nozama.aluguel_veiculos.dto.ModelRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -21,7 +22,13 @@ public class Model {
 
     private String nome;
 
-    public Model(ModelRequest request) {
+    @ManyToOne
+    @JoinColumn(name = "brand_id")
+    @JsonBackReference
+    private Brand brand;
+
+    public Model(ModelRequest request, Brand brand) {
         this.nome = request.nome();
+        this.brand = brand;
     }
 }
