@@ -2,10 +2,13 @@ package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.*;
 import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
+import com.nozama.aluguel_veiculos.dto.VehicleFilter;
 import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import com.nozama.aluguel_veiculos.repository.*;
+import com.nozama.aluguel_veiculos.specification.VehicleSpecification;
 import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -72,13 +75,13 @@ public class VehicleService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
     }
 
-    public List<Vehicle> findByCategory(String name) {
-        List<Vehicle> vehicles = vehicleRepository.findByCategory_Nome(name);
+    public List<Vehicle> searchVehicles(VehicleFilter filter) {
+        Specification<Vehicle> spec = VehicleSpecification.filter(filter);
+        List<Vehicle> vehicles = vehicleRepository.findAll(spec);
 
-        if (vehicles.isEmpty()) {
+        if (vehicles.isEmpty()){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículos não encontrados.");
         }
-
         return vehicles;
     }
 

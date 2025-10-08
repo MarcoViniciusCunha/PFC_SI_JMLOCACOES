@@ -1,6 +1,7 @@
 package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Vehicle;
+import com.nozama.aluguel_veiculos.dto.VehicleFilter;
 import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import com.nozama.aluguel_veiculos.services.VehicleService;
@@ -37,9 +38,25 @@ public class VehicleController {
         return ResponseEntity.ok(service.findById(placa));
     }
 
-    @GetMapping("/category")
-    public ResponseEntity<List<Vehicle>> getByCategory(@RequestParam String name){
-        return ResponseEntity.ok(service.findByCategory(name));
+    @GetMapping("/search")
+    public ResponseEntity<List<Vehicle>> search(
+            @RequestParam(required = false) String placa,
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) Integer ano,
+            @RequestParam(required = false) String status) {
+
+        VehicleFilter filter = new VehicleFilter();
+        filter.setPlaca(placa);
+        filter.setIdCategoria(categoria != null ? Integer.valueOf(categoria) : null);
+        filter.setIdMarca(brand != null ? Integer.valueOf(brand) : null);
+        filter.setIdCor(color != null ? Integer.valueOf(color) : null);
+        filter.setAno(ano);
+        filter.setStatus(status != null ? status.toUpperCase() : null);
+
+        List<Vehicle> vehicles = service.searchVehicles(filter);
+        return ResponseEntity.ok(vehicles);
     }
 
     @PatchMapping("/{placa}")
