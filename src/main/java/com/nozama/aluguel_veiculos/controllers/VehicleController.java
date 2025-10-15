@@ -49,11 +49,13 @@ public class VehicleController {
 
         VehicleFilter filter = new VehicleFilter();
         filter.setPlaca(placa);
-        filter.setIdCategoria(categoria != null ? Integer.valueOf(categoria) : null);
-        filter.setIdMarca(brand != null ? Integer.valueOf(brand) : null);
-        filter.setIdCor(color != null ? Integer.valueOf(color) : null);
+
+        filter.setIdCategoria(categoria != null && !categoria.isEmpty() ? Integer.valueOf(categoria) : null);
+        filter.setIdMarca(brand != null && !brand.isEmpty() ? Integer.valueOf(brand) : null);
+        filter.setIdCor(color != null && !color.isEmpty() ? Integer.valueOf(color) : null);
+
         filter.setAno(ano);
-        filter.setStatus(status != null ? status.toUpperCase() : null);
+        filter.setStatus(status != null && !status.isEmpty() ? status.toUpperCase() : null);
 
         List<Vehicle> vehicles = service.searchVehicles(filter);
         return ResponseEntity.ok(vehicles);
