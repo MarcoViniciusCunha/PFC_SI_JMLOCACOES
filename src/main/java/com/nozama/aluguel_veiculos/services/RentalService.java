@@ -5,6 +5,8 @@ import com.nozama.aluguel_veiculos.domain.Rental;
 import com.nozama.aluguel_veiculos.domain.Vehicle;
 import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
+import com.nozama.aluguel_veiculos.dto.RentalResponse;
+import com.nozama.aluguel_veiculos.dto.RentalUpdateRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class RentalService {
@@ -68,5 +71,82 @@ public class RentalService {
         vehicle.setStatus(VehicleStatus.DISPONIVEL);
 
         return rentalRepository.save(rental);
+    }
+
+    @Transactional
+    public Rental update(Long id, RentalUpdateRequest request){
+        Rental rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Locação não encontrada."));
+
+        if (rental.isReturned()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível editar uma locação já devolvida.");
+        }
+
+        if (!rental.getStartDate().isAfter(LocalDate.now().minusDays(1))){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível alterar uma locação já iniciada.");
+        }
+
+        if(request.startDate() != null) rental.setStartDate(request.startDate());
+        if(request.endDate() != null) rental.setEndDate(request.endDate());
+        if(request.price() != null) rental.setPrice(request.price());
+
+        if (request.placa() != null){
+            Vehicle oldVehicle = rental.getVehicle();
+
+            Vehicle newVehicle = vehicleRepository.findById(request.placa())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Veículo não encontrado."));
+
+            if (newVehicle.getStatus() != VehicleStatus.DISPONIVEL){
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Veículo não disponível para aluguel.");
+            }
+
+            oldVehicle.setStatus(VehicleStatus.DISPONIVEL);
+            vehicleRepository.save(oldVehicle);
+
+            newVehicle.setStatus(VehicleStatus.ALUGADO);
+
+            rental.setVehicle(newVehicle);
+        }
+
+        if (request.cpf() != null){
+            Customer customer = customerRepository.findByCpf(request.cpf())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cliente nâo encontrado."));
+            rental.setCustomer(customer);
+        }
+
+        return rentalRepository.save(rental);
+    }
+
+    public void deleteById(Long id){
+        Rental rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Locação não encontrada."));
+
+        if (!rental.getStartDate().isAfter(LocalDate.now())){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível deletar uma locação já iniciada.");
+        }
+
+        if (!rental.isReturned()){
+            Vehicle vehicle = rental.getVehicle();
+            vehicle.setStatus(VehicleStatus.DISPONIVEL);
+        }
+
+        rentalRepository.deleteById(id);
+    }
+
+    public List<RentalResponse> getAll(){
+        return rentalRepository.findAll()
+                .stream()
+                .map(r -> new RentalResponse(
+                        r.getId(),
+                        r.getVehicle().getPlaca(),
+                        r.getVehicle().getModel().getNome(),
+                        r.getCustomer().getNome(),
+                        r.getStartDate(),
+                        r.getEndDate(),
+                        r.getReturnDate(),
+                        r.getPrice(),
+                        r.isReturned()
+                ))
+                .toList();
     }
 }
