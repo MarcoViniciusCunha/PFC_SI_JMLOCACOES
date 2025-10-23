@@ -25,5 +25,4 @@ public class Return {
     private LocalDate dataFim;
 
     private String desc;
-
 }

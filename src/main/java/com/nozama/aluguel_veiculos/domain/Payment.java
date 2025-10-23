@@ -31,5 +31,5 @@ public class Payment {
 
     private String status;
 
-    // Getters e Setters
+
 }

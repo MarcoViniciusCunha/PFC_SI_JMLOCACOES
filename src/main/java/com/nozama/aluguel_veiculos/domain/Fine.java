@@ -27,5 +27,4 @@ public class Fine {
 
     private Integer diasAtraso;
 
-    // Getters e Setters
 }
