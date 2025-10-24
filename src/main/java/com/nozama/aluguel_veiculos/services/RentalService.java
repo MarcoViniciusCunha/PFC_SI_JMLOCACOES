@@ -11,6 +11,9 @@ import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,13 +27,11 @@ public class RentalService {
     private final RentalRepository rentalRepository;
     private final VehicleRepository vehicleRepository;
     private final CustomerRepository customerRepository;
-    private final VehicleService vehicleService;
 
-    public RentalService(RentalRepository rentalRepository, VehicleRepository vehicleRepository, CustomerRepository customerRepository, VehicleService vehicleService){
+    public RentalService(RentalRepository rentalRepository, VehicleRepository vehicleRepository, CustomerRepository customerRepository){
         this.rentalRepository =  rentalRepository;
         this.vehicleRepository = vehicleRepository;
         this.customerRepository = customerRepository;
-        this.vehicleService = vehicleService;
     }
 
     @Transactional
@@ -148,5 +149,35 @@ public class RentalService {
                         r.isReturned()
                 ))
                 .toList();
+    }
+
+    public Page<RentalResponse> listRentals(String cpf, String placa, String status, Pageable pageable) {
+
+        Boolean returned = null;
+        if (status != null){
+            switch (status.toUpperCase()) {
+                case "DEVOLVIDA" -> returned = true;
+                case "ATIVA" -> returned = false;
+            }
+        }
+
+        Page<Rental> rentals = rentalRepository.findFiltered(cpf, placa, returned, pageable);
+
+        List<RentalResponse> filtered = rentals.stream()
+                .map(r -> new RentalResponse(
+                        r.getId(),
+                        r.getVehicle().getPlaca(),
+                        r.getVehicle().getModel().getNome(),
+                        r.getCustomer().getNome(),
+                        r.getStartDate(),
+                        r.getEndDate(),
+                        r.getReturnDate(),
+                        r.getPrice(),
+                        r.isReturned()
+                ))
+                .filter(rr -> status == null || rr.status().equalsIgnoreCase(status))
+                .toList();
+
+        return new PageImpl<>(filtered, pageable, filtered.size());
     }
 }
