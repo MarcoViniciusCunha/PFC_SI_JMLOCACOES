@@ -5,6 +5,10 @@ CREATE TABLE customer (
     cpf VARCHAR(14) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     telefone VARCHAR(20),
-    endereco VARCHAR(255),
+    cep VARCHAR(8) NOT NULL,
+    numero VARCHAR(10) NOT NULL,
+    rua VARCHAR(255),
+    cidade VARCHAR(255),
+    estado VARCHAR(255),
     data_nasc DATE
 );
