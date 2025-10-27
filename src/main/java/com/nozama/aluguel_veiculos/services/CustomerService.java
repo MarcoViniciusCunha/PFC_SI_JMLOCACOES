@@ -10,18 +10,36 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class CustomerService {
 
     private final CustomerRepository repository;
+    private final CepService cepService;
 
-    public CustomerService(CustomerRepository repository) {
+    public CustomerService(CustomerRepository repository, CepService cepService) {
         this.repository = repository;
+        this.cepService = cepService;
     }
 
     public Customer create(CustomerRequest request){
         Customer customer = new Customer(request);
+
+        if(request.cep() != null && !request.cep().isEmpty()){
+            try {
+                Map<String, String> endereco = cepService.buscarEndereco(request.cep());
+                if (endereco.containsKey("erro")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP inválido");
+                }
+                customer.setRua((String)endereco.get("logradouro"));
+                customer.setCidade((String)endereco.get("localidade"));
+                customer.setEstado((String)endereco.get("uf"));
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao buscar endereço");
+            }
+        }
+
         try {
             return repository.save(customer);
         } catch (DataIntegrityViolationException e){
@@ -66,11 +84,26 @@ public class CustomerService {
         if (request.telefone() != null) {
             existing.setTelefone(request.telefone());
         }
-        if (request.endereco() != null) {
-            existing.setEndereco(request.endereco());
+        if (request.numero() != null) {
+            existing.setNumero(request.numero());
         }
         if (request.data_nasc() != null) {
             existing.setData_nasc(request.data_nasc());
+        }
+
+        if (request.cep() != null) {
+            existing.setCep(request.cep());
+            try {
+                Map<String, String> endereco = cepService.buscarEndereco(request.cep());
+                if (endereco.containsKey("erro")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP inválido");
+                }
+                existing.setRua((String) endereco.get("logradouro"));
+                existing.setCidade((String)endereco.get("localidade"));
+                existing.setEstado((String)endereco.get("uf"));
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao buscar endereço");
+            }
         }
 
         try {

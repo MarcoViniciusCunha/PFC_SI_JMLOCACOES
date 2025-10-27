@@ -23,7 +23,16 @@ public record CustomerRequest(
         String telefone,
 
         @NotBlank(message = "Informe o endereço.")
-        String endereco,
+        String cep,
+
+        @NotBlank(message = "Informe o número da residência")
+        String numero,
+
+        String rua,
+
+        String cidade,
+
+        String estado,
 
         @NotNull(message = "Informe a data de nascimento.")
         LocalDate data_nasc

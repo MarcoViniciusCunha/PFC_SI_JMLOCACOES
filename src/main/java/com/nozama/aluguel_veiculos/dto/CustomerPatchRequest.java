@@ -12,7 +12,15 @@ public record CustomerPatchRequest(
 
         String telefone,
 
-        String endereco,
+        String cep,
+
+        String numero,
+
+        String rua,
+
+        String cidade,
+
+        String estado,
 
         LocalDate data_nasc
 ) {

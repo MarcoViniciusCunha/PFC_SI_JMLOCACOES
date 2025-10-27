@@ -30,7 +30,12 @@ public class Customer {
 
     private String telefone;
 
-    private String endereco;
+    private String cep;
+    private String numero;
+
+    private String rua;
+    private String cidade;
+    private String estado;
 
     private LocalDate data_nasc;
 
@@ -40,7 +45,11 @@ public class Customer {
         this.cpf = request.cpf();
         this.email = request.email();
         this.telefone = request.telefone();
-        this.endereco = request.endereco();
+        this.cep = request.cep();
+        this.numero = request.numero();
+        this.rua = request.rua();
+        this.cidade = request.cidade();
+        this.estado = request.estado();
         this.data_nasc = request.data_nasc();
     }
 }
