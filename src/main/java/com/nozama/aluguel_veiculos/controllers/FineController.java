@@ -2,6 +2,7 @@ package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Fine;
 import com.nozama.aluguel_veiculos.dto.FineRequest;
+import com.nozama.aluguel_veiculos.repository.FineRepository;
 import com.nozama.aluguel_veiculos.services.FineService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 public class FineController {
 
     private final FineService service;
+    private final FineRepository repository;
 
     @PostMapping
     public ResponseEntity<Fine> create(@RequestBody @Valid FineRequest request) {
@@ -26,7 +28,8 @@ public class FineController {
 
     @GetMapping
     public ResponseEntity<List<Fine>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+        List<Fine> fine = repository.findAll();
+        return ResponseEntity.ok(fine);
     }
 
     @GetMapping("/{id}")
@@ -37,6 +40,6 @@ public class FineController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record RentalRequest(
-        @NotBlank(message = "Insira o veículo")
+        @NotBlank(message = "Informe a placa do veículo.")
         String placa,
 
-        @NotNull(message = "Insira o cliente")
+        @NotNull(message = "Insira o cpf do cliente")
         String cpf,
 
         @NotNull(message = "Insira a data inicial")

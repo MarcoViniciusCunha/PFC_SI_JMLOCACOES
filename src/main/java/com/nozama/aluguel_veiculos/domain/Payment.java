@@ -1,15 +1,17 @@
 package com.nozama.aluguel_veiculos.domain;
 
+import com.nozama.aluguel_veiculos.dto.PaymentRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "payment")
+@Table(name = "payments")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,15 +23,26 @@ public class Payment {
     private Long id;
 
     @ManyToOne
-    private Location location;
+    @JoinColumn(name = "rental_id", nullable = false)
+    private Rental rental;
 
-    private LocalDate data;
+    private LocalDate data_pagamento;
 
-    private Double valor;
+    private BigDecimal valor;
 
     private String formaPagto;
 
     private String status;
 
+    private Integer parcelas;
+
+    public Payment(Rental rental, PaymentRequest request){
+        this.rental = rental;
+        this.data_pagamento = request.dataPagamento();
+        this.valor = request.valor();
+        this.formaPagto = request.formaPagto();
+        this.status = request.status();
+        this.parcelas = request.parcelas();
+    }
 
 }

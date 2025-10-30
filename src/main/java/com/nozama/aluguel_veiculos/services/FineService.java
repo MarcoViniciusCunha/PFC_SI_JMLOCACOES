@@ -1,37 +1,33 @@
 package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.Fine;
-import com.nozama.aluguel_veiculos.domain.Location;
+import com.nozama.aluguel_veiculos.domain.Rental;
 import com.nozama.aluguel_veiculos.dto.FineRequest;
 import com.nozama.aluguel_veiculos.repository.FineRepository;
-import com.nozama.aluguel_veiculos.repository.LocationRepository;
+import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class FineService {
 
     private final FineRepository repository;
-    private final LocationRepository locationRepository;
+    private final RentalRepository rentalRepository;
 
     public Fine create(FineRequest request) {
-        Location location = locationRepository.findById(request.locationId())
-                .orElseThrow(() -> new RuntimeException("Locação não encontrada com id: " + request.locationId()));
+        Rental rental = rentalRepository.findRentalByVehiclePlateAndDate(
+                request.placa(),
+                request.dataMulta()
+                )
+                .orElseThrow(() -> new RuntimeException("Locação não encontrada com o veículo de placa " + request.placa()
+                        + " na data de " + request.dataMulta()
+                ));
 
-        Fine fine = new Fine();
-        fine.setPlacaVeiculo(request.placaVeiculo());
-        fine.setValor(request.valor());
-        fine.setLocation(location);
-        fine.setDiasAtraso(request.diasAtraso());
+        Fine fine = new Fine(rental, request);
 
         return repository.save(fine);
-    }
-
-    public List<Fine> findAll() {
-        return repository.findAll();
     }
 
     public Fine findById(Long id) {
@@ -40,7 +36,8 @@ public class FineService {
     }
 
     public void delete(Long id) {
-        Fine fine = findById(id);
+        Fine fine = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Multa não encontrada com id: " + id));
         repository.delete(fine);
     }
 }
