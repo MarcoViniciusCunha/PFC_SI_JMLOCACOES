@@ -1,7 +1,9 @@
 package com.nozama.aluguel_veiculos.controllers;
 
+import com.nozama.aluguel_veiculos.domain.Fine;
 import com.nozama.aluguel_veiculos.domain.Inspection;
 import com.nozama.aluguel_veiculos.dto.InspectionRequest;
+import com.nozama.aluguel_veiculos.dto.InspectionResponse;
 import com.nozama.aluguel_veiculos.repository.InspectionRepository;
 import com.nozama.aluguel_veiculos.services.InspectionService;
 import jakarta.validation.Valid;
@@ -21,24 +23,39 @@ public class InspectionController {
     private final InspectionRepository inspectionRepository;
 
     @PostMapping
-    public ResponseEntity<Inspection> create(@RequestBody @Valid InspectionRequest request){
+    public ResponseEntity<InspectionResponse> create(@RequestBody @Valid InspectionRequest request){
         Inspection inspection = service.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(inspection);
+        return ResponseEntity.status(HttpStatus.CREATED).body(InspectionResponse.fromEntity(inspection));
     }
 
     @GetMapping
-    public ResponseEntity<List<Inspection>> getAll(){
-        return ResponseEntity.ok(inspectionRepository.findAll());
+    public ResponseEntity<List<InspectionResponse>> getAll(){
+        List<Inspection> inspections = inspectionRepository.findAll();
+
+        List<InspectionResponse> response = inspections.stream()
+                .map(InspectionResponse::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Inspection> getById(@PathVariable Long id){
-        return ResponseEntity.ok(service.findById(id));
+    public ResponseEntity<InspectionResponse> getById(@PathVariable Long id){
+        Inspection inspection = service.findById(id);
+
+        return ResponseEntity.ok(InspectionResponse.fromEntity(inspection));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<InspectionResponse> update(@PathVariable Long id, @RequestBody InspectionRequest.update request) {
+        Inspection inspection = service.findById(id);
+        Inspection updatedInspection = service.update(inspection, request);
+        return ResponseEntity.ok(InspectionResponse.fromEntity(updatedInspection));
     }
 }

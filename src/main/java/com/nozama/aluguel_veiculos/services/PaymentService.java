@@ -34,4 +34,32 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Pagamento não encontrada com id: " + id));
         paymentRepository.delete(payment);
     }
+
+    public Payment update(Payment payment, PaymentRequest.update request){
+        if (request.rentalId() != null && !request.rentalId().equals(payment.getRental().getId())) {
+            Rental rental = rentalRepository.findById(request.rentalId())
+                    .orElseThrow(() -> new RuntimeException("Locação não encontrada"));
+            payment.setRental(rental);
+        }
+        if (request.dataPagamento() != null && !request.dataPagamento().equals(payment.getData_pagamento())) {
+            payment.setData_pagamento(request.dataPagamento());
+        }
+        if (request.valor() != null && !request.valor().equals(payment.getValor())) {
+            payment.setValor(request.valor());
+        }
+        if (request.formaPagto() != null && !request.formaPagto().equals(payment.getFormaPagto())) {
+            payment.setFormaPagto(request.formaPagto());
+        }
+        if (request.status() != null && !request.status().equals(payment.getStatus())) {
+            payment.setStatus(request.status());
+        }
+        if (request.parcelas() != null && !request.parcelas().equals(payment.getParcelas())) {
+            payment.setParcelas(request.parcelas());
+        }
+        if (request.descricao() != null && !request.descricao().equals(payment.getDescricao())) {
+            payment.setDescricao(request.descricao());
+        }
+
+        return paymentRepository.save(payment);
+    }
 }

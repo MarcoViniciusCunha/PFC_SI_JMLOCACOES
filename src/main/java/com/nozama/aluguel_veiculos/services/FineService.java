@@ -8,6 +8,8 @@ import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 
 @Service
 @RequiredArgsConstructor
@@ -40,4 +42,32 @@ public class FineService {
                 .orElseThrow(() -> new RuntimeException("Multa não encontrada com id: " + id));
         repository.delete(fine);
     }
+
+    public Fine update(Fine fine, FineRequest.update request) {
+        if (request.dataMulta() != null && !request.dataMulta().equals(fine.getData_multa())) {
+            fine.setData_multa(request.dataMulta());
+        }
+        if (request.descricao() != null && !request.descricao().equals(fine.getDescricao())) {
+            fine.setDescricao(request.descricao());
+        }
+        if (request.valor() != null && !request.valor().equals(fine.getValor())) {
+            fine.setValor(request.valor());
+        }
+        if (request.placa() != null && !request.placa().equals(fine.getRental().getVehicle().getPlaca())) {
+            LocalDate dataBusca = request.dataMulta() != null ? request.dataMulta() : fine.getData_multa();
+
+            Rental rental = rentalRepository.findRentalByVehiclePlateAndDate(
+                    request.placa(),
+                    dataBusca
+            ).orElseThrow(() -> new RuntimeException(
+                    "Locação não encontrada com o veículo de placa " + request.placa()
+                            + " na data de " + dataBusca
+            ));
+
+            fine.setRental(rental);
+        }
+
+        return repository.save(fine);
+    }
+
 }

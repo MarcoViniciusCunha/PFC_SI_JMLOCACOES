@@ -34,4 +34,23 @@ public class InspectionService {
                 .orElseThrow(() -> new RuntimeException("Inspeção não encontrada com id: " + id));
         inspectionRepository.delete(inspection);
     }
+
+    public Inspection update(Inspection inspection, InspectionRequest.update request) {
+        if (request.rentalId() != null && !request.rentalId().equals(inspection.getRental().getId())) {
+            Rental rental = rentalRepository.findById(request.rentalId())
+                            .orElseThrow(() -> new RuntimeException("Locação não encontrada"));
+            inspection.setRental(rental);
+        }
+        if (request.data_inspecao() != null && !request.data_inspecao().equals(inspection.getData_inspecao())) {
+            inspection.setData_inspecao(request.data_inspecao());
+        }
+        if (request.descricao() != null && !request.descricao().equals(inspection.getDescricao())) {
+            inspection.setDescricao(request.descricao());
+        }
+        if (request.danificado() != null && request.danificado() != inspection.isDanificado()) {
+            inspection.setDanificado(request.danificado());
+        }
+
+        return inspectionRepository.save(inspection);
+    }
 }

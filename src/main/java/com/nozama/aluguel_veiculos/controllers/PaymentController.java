@@ -49,4 +49,11 @@ public class PaymentController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<PaymentResponse> update(@PathVariable Long id, @RequestBody PaymentRequest.update request) {
+        Payment payment = service.findById(id);
+        Payment updatedPayment = service.update(payment, request);
+        return ResponseEntity.ok().body(PaymentResponse.fromEntity(updatedPayment));
+    }
 }

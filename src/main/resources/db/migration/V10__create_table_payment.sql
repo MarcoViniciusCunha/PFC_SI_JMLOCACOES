@@ -6,5 +6,6 @@ CREATE TABLE payments (
     forma_pagto VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
     parcelas INT,
+    descricao TEXT,
     FOREIGN KEY (rental_id) REFERENCES rental(id)
 );

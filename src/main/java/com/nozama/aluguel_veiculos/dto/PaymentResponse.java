@@ -14,11 +14,6 @@ public record PaymentResponse(
         String status,
         Integer parcelas
 ) {
-    public record RentalInfo(
-            Long id,
-            String placa,
-            String customerNome
-    ) {}
         public static PaymentResponse fromEntity(Payment payment) {
             RentalInfo rentalInfo = new RentalInfo(
                     payment.getRental().getId(),
@@ -35,5 +30,23 @@ public record PaymentResponse(
                     payment.getStatus(),
                     payment.getParcelas()
             );
+    }
+
+    public static PaymentResponse fromEntitySummary(Payment payment) {
+        RentalInfo rentalInfo = new RentalInfo(
+                payment.getRental().getId(),
+                payment.getRental().getVehicle().getPlaca(),
+                payment.getRental().getCustomer().getNome()
+        );
+
+        return new PaymentResponse(
+                payment.getId(),
+                null,
+                payment.getData_pagamento(),
+                payment.getValor(),
+                payment.getFormaPagto(),
+                payment.getStatus(),
+                payment.getParcelas()
+        );
     }
 }

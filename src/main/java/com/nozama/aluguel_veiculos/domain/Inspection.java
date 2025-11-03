@@ -21,7 +21,7 @@ public class Inspection {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "rental_id", nullable = false)
     private Rental rental;
 
@@ -35,5 +35,6 @@ public class Inspection {
         this.rental = rental;
         this.data_inspecao = request.data_inspecao();
         this.descricao = request.descricao();
+        this.danificado = request.danificado();
     }
 }

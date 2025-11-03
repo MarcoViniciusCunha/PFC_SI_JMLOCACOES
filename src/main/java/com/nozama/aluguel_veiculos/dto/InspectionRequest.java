@@ -13,6 +13,14 @@ public record InspectionRequest(
         LocalDate data_inspecao,
 
         @NotBlank
-        String descricao
+        String descricao,
+
+        boolean danificado
 ) {
+    public record update(
+            Long rentalId,
+            LocalDate data_inspecao,
+            String descricao,
+            Boolean danificado
+    ){}
 }

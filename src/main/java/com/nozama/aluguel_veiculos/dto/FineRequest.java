@@ -20,4 +20,12 @@ public record FineRequest(
 
         @NotNull(message = "Informe o dia da multa.")
         LocalDate dataMulta
-) {}
+) {
+    public record update(
+            String placa,
+            String descricao,
+            @Positive(message = "O valor da multa deve ser positivo.")
+            BigDecimal valor,
+            LocalDate dataMulta
+    ){}
+}

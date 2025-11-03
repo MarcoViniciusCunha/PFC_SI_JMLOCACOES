@@ -2,6 +2,7 @@ package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Fine;
 import com.nozama.aluguel_veiculos.dto.FineRequest;
+import com.nozama.aluguel_veiculos.dto.FineResponse;
 import com.nozama.aluguel_veiculos.repository.FineRepository;
 import com.nozama.aluguel_veiculos.services.FineService;
 import jakarta.validation.Valid;
@@ -21,20 +22,25 @@ public class FineController {
     private final FineRepository repository;
 
     @PostMapping
-    public ResponseEntity<Fine> create(@RequestBody @Valid FineRequest request) {
-        Fine saved = service.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<FineResponse> create(@RequestBody @Valid FineRequest request) {
+        Fine fine = service.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(FineResponse.fromEntity(fine));
     }
 
     @GetMapping
-    public ResponseEntity<List<Fine>> getAll() {
-        List<Fine> fine = repository.findAll();
-        return ResponseEntity.ok(fine);
+    public ResponseEntity<List<FineResponse>> getAll() {
+        List<Fine> fines = repository.findAll();
+
+        List<FineResponse> response = fines.stream()
+                .map(FineResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Fine> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.findById(id));
+    public ResponseEntity<FineResponse> getById(@PathVariable Long id) {
+        Fine fine = service.findById(id);
+        return ResponseEntity.ok(FineResponse.fromEntity(fine));
     }
 
     @DeleteMapping("/{id}")
@@ -42,4 +48,12 @@ public class FineController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<FineResponse> update(@PathVariable Long id, @RequestBody FineRequest.update request) {
+        Fine fine = service.findById(id);
+        Fine updatedFine = service.update(fine, request);
+        return ResponseEntity.ok(FineResponse.fromEntity(updatedFine));
+    }
+
 }

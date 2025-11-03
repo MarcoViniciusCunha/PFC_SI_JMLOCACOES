@@ -36,6 +36,8 @@ public class Payment {
 
     private Integer parcelas;
 
+    private String descricao;
+
     public Payment(Rental rental, PaymentRequest request){
         this.rental = rental;
         this.data_pagamento = request.dataPagamento();
@@ -43,6 +45,7 @@ public class Payment {
         this.formaPagto = request.formaPagto();
         this.status = request.status();
         this.parcelas = request.parcelas();
+        this.descricao = request.descricao();
     }
 
 }
