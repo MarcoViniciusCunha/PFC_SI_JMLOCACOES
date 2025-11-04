@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "rental")
@@ -38,6 +40,15 @@ public class Rental {
     private Double price;
 
     private boolean returned = false;
+
+    @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Fine> fines = new ArrayList<>();
+
+    @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Inspection> inspections = new ArrayList<>();
+
+    @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Payment> payments = new ArrayList<>();
 
     public Rental(Vehicle vehicle, Customer customer, RentalRequest request){
         this.vehicle = vehicle;

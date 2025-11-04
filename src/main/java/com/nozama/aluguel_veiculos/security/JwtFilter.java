@@ -45,7 +45,7 @@ public class JwtFilter extends OncePerRequestFilter {
             user = jwt.getUserFromToken(token); // extrai email do token
         }
 
-        // se o token troxe email e o user ainda n esta autenticado
+        // se o token trouxe email e o user ainda n esta autenticado
         if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             // valida se o token é valido
             if (jwt.validateToken(token)) {

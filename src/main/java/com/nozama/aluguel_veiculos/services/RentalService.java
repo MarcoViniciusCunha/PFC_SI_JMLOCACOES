@@ -137,24 +137,15 @@ public class RentalService {
     public List<RentalResponse> getAll(){
         return rentalRepository.findAll()
                 .stream()
-                .map(r -> new RentalResponse(
-                        r.getId(),
-                        r.getVehicle().getPlaca(),
-                        r.getVehicle().getModel().getNome(),
-                        r.getCustomer().getNome(),
-                        r.getStartDate(),
-                        r.getEndDate(),
-                        r.getReturnDate(),
-                        r.getPrice(),
-                        r.isReturned()
-                ))
+                .map(RentalResponse::fromEntityBasic)
                 .toList();
     }
 
     public Page<RentalResponse> listRentals(String cpf, String placa, String status, Pageable pageable) {
 
+
         Boolean returned = null;
-        if (status != null){
+        if (status != null) {
             switch (status.toUpperCase()) {
                 case "DEVOLVIDA" -> returned = true;
                 case "ATIVA" -> returned = false;
@@ -163,18 +154,9 @@ public class RentalService {
 
         Page<Rental> rentals = rentalRepository.findFiltered(cpf, placa, returned, pageable);
 
+        // Mapeia cada Rental para RentalResponse completo
         List<RentalResponse> filtered = rentals.stream()
-                .map(r -> new RentalResponse(
-                        r.getId(),
-                        r.getVehicle().getPlaca(),
-                        r.getVehicle().getModel().getNome(),
-                        r.getCustomer().getNome(),
-                        r.getStartDate(),
-                        r.getEndDate(),
-                        r.getReturnDate(),
-                        r.getPrice(),
-                        r.isReturned()
-                ))
+                .map(RentalResponse::fromEntityBasic)
                 .filter(rr -> status == null || rr.status().equalsIgnoreCase(status))
                 .toList();
 
