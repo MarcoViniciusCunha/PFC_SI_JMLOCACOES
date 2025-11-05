@@ -16,8 +16,8 @@ public class PaymentService {
     private final RentalRepository rentalRepository;
 
     public Payment create(PaymentRequest request){
-        Rental rental = rentalRepository.findById(request.rentalId())
-                .orElseThrow(() -> new RuntimeException("Locação não encontrada com id: " + request.rentalId()));
+        Long id = request.rentalId();
+        Rental rental = findRental(id);
 
         Payment payment = new Payment(rental, request);
 
@@ -30,15 +30,14 @@ public class PaymentService {
     };
 
     public void delete(Long id){
-        Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pagamento não encontrada com id: " + id));
+        Payment payment = findById(id);
         paymentRepository.delete(payment);
     }
 
     public Payment update(Payment payment, PaymentRequest.update request){
         if (request.rentalId() != null && !request.rentalId().equals(payment.getRental().getId())) {
-            Rental rental = rentalRepository.findById(request.rentalId())
-                    .orElseThrow(() -> new RuntimeException("Locação não encontrada"));
+            Long id = request.rentalId();
+            Rental rental = findRental(id);
             payment.setRental(rental);
         }
         if (request.dataPagamento() != null && !request.dataPagamento().equals(payment.getData_pagamento())) {
@@ -61,5 +60,10 @@ public class PaymentService {
         }
 
         return paymentRepository.save(payment);
+    }
+
+    private Rental findRental (Long id) {
+        return rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Locação não encontrada com id: " + id));
     }
 }

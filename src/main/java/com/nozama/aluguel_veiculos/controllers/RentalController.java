@@ -3,7 +3,6 @@ package com.nozama.aluguel_veiculos.controllers;
 import com.nozama.aluguel_veiculos.domain.Rental;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
 import com.nozama.aluguel_veiculos.dto.RentalResponse;
-import com.nozama.aluguel_veiculos.dto.RentalUpdateRequest;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.services.RentalService;
 import jakarta.validation.Valid;
@@ -19,11 +18,9 @@ import java.util.List;
 public class RentalController {
 
     private RentalService service;
-    private RentalRepository repository;
 
     public RentalController(RentalService service, RentalRepository repository){
         this.service = service;
-        this.repository = repository;
     }
 
     @PostMapping
@@ -39,7 +36,7 @@ public class RentalController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Rental> update(@PathVariable Long id, @RequestBody RentalUpdateRequest request){
+    public ResponseEntity<Rental> update(@PathVariable Long id, @RequestBody RentalRequest.update request){
         Rental update = service.update(id, request);
         return ResponseEntity.ok(update);
     }
@@ -54,6 +51,12 @@ public class RentalController {
     public ResponseEntity<List<RentalResponse>> getAll(){
         List<RentalResponse> rentals = service.getAll();
         return ResponseEntity.ok(rentals);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RentalResponse> getById(@PathVariable Long id){
+        Rental rental = service.findRentalById(id);
+        return ResponseEntity.ok(RentalResponse.fromEntity(rental));
     }
 
     @GetMapping("/filter")

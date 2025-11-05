@@ -22,4 +22,16 @@ public record RentalRequest(
         Double price
 
 ) {
+    public record update(
+            String placa,
+
+            String cpf,
+
+            LocalDate startDate,
+
+            LocalDate endDate,
+
+            Double price
+    ) {
+    }
 }

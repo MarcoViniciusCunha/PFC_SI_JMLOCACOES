@@ -3,16 +3,24 @@ package com.nozama.aluguel_veiculos.security;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 
 @Component // Spring injeta essa classe em outros beans
 public class Jwt {
 
     // Gera uma chave secreta unica com o algoritmo 256
-    private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final Key secretKey;
+
+    public Jwt(@Value("${jwt.secret}") String secret) {
+        byte[] keyBytes = Base64.getEncoder().encode(secret.getBytes());
+        this.secretKey = new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
+    }
 
     // gera com base no username
     public String generateToken(String username) {

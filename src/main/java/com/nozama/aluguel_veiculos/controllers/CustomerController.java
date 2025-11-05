@@ -1,7 +1,6 @@
 package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
-import com.nozama.aluguel_veiculos.dto.CustomerPatchRequest;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.services.CustomerService;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +41,7 @@ public class CustomerController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Customer> update(@PathVariable Long id, @RequestBody CustomerPatchRequest request){
+    public ResponseEntity<Customer> update(@PathVariable Long id, @RequestBody CustomerRequest.update request){
         Customer update = service.update(id, request);
         return ResponseEntity.ok().body(update);
     }

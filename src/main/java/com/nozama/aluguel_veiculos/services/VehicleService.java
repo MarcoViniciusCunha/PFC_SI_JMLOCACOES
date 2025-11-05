@@ -3,7 +3,6 @@ package com.nozama.aluguel_veiculos.services;
 import com.nozama.aluguel_veiculos.domain.*;
 import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.VehicleFilter;
-import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import com.nozama.aluguel_veiculos.repository.*;
 import com.nozama.aluguel_veiculos.specification.VehicleSpecification;
@@ -86,7 +85,7 @@ public class VehicleService {
     }
 
     @Transactional
-    public Vehicle updateVehicle(String placa, VehiclePatchRequest request) {
+    public Vehicle updateVehicle(String placa, VehicleRequest.update request) {
         Vehicle vehicle = vehicleRepository.findById(placa)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
 

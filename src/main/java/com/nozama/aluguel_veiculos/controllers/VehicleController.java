@@ -2,7 +2,6 @@ package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Vehicle;
 import com.nozama.aluguel_veiculos.dto.VehicleFilter;
-import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
 import com.nozama.aluguel_veiculos.services.VehicleService;
 import jakarta.validation.Valid;
@@ -62,7 +61,7 @@ public class VehicleController {
     }
 
     @PatchMapping("/{placa}")
-    public ResponseEntity<Vehicle> update(@PathVariable String placa, @RequestBody @Valid VehiclePatchRequest request){
+    public ResponseEntity<Vehicle> update(@PathVariable String placa, @RequestBody @Valid VehicleRequest.update request){
         Vehicle updated = service.updateVehicle(placa, request);
         return ResponseEntity.ok(updated);
     }

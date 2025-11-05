@@ -18,14 +18,14 @@ public class CategoryService {
         this.repository = repository;
     }
 
-    public Category create(CategoryRequest categoryRequest) {
-        if (repository.existsByNome(categoryRequest.nome())) {
+    public Category create(CategoryRequest request) {
+        if (repository.existsByNome(request.nome())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Categoria '" + categoryRequest.nome() + "' já existe!"
+                    "Categoria '" + request.nome() + "' já existe!"
             );
         }
-        return repository.save(new Category(categoryRequest));
+        return repository.save(new Category(request));
     }
 
     public List<Category> findAll() {
@@ -33,8 +33,7 @@ public class CategoryService {
     }
 
     public Category patchById(int id, CategoryRequest request) {
-        Category category = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada!"));
+        Category category = findById(id);
 
         if (request.nome() != null && !request.nome().isBlank()) {
             repository.findByNome(request.nome()).ifPresent(existing -> {
@@ -46,12 +45,16 @@ public class CategoryService {
             category.setNome(request.nome());
         }
 
-        // Atualiza a descrição apenas se vier no request
         if (request.descricao() != null) {
             category.setDescricao(request.descricao());
         }
 
         return repository.save(category);
+    }
+
+    public Category findById(int id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada!"));
     }
 
     public void deleteById(int id) {

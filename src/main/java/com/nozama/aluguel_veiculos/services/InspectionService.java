@@ -16,9 +16,8 @@ public class InspectionService {
     private final RentalRepository rentalRepository;
 
     public Inspection create(InspectionRequest request){
-        Rental rental = rentalRepository.findById(request.rentalId())
-                .orElseThrow(() -> new RuntimeException("Locação não encontrada com id: " + request.rentalId()));
-
+        Long id = request.rentalId();
+        Rental rental = findRental(id);
         Inspection inspection = new Inspection(rental, request);
 
         return inspectionRepository.save(inspection);
@@ -30,15 +29,14 @@ public class InspectionService {
     }
 
     public void delete(Long id){
-        Inspection inspection = inspectionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inspeção não encontrada com id: " + id));
+        Inspection inspection = findById(id);
         inspectionRepository.delete(inspection);
     }
 
     public Inspection update(Inspection inspection, InspectionRequest.update request) {
         if (request.rentalId() != null && !request.rentalId().equals(inspection.getRental().getId())) {
-            Rental rental = rentalRepository.findById(request.rentalId())
-                            .orElseThrow(() -> new RuntimeException("Locação não encontrada"));
+            Long id = request.rentalId();
+            Rental rental = findRental(id);
             inspection.setRental(rental);
         }
         if (request.data_inspecao() != null && !request.data_inspecao().equals(inspection.getData_inspecao())) {
@@ -53,4 +51,10 @@ public class InspectionService {
 
         return inspectionRepository.save(inspection);
     }
+
+    private Rental findRental(Long id) {
+        return rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inspeção não encontrada com id:" + id));
+    }
+
 }

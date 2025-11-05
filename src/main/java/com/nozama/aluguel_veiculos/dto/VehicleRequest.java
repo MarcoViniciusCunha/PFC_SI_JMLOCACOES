@@ -31,4 +31,15 @@ public record VehicleRequest(
         @NotNull(message = "Informe o seguro do veículo.")
         Integer idSeguro
 ) {
+    public record update(
+            Integer idMarca,
+            Integer idCor,
+            Integer idModelo,
+            String status,
+            String descricao,
+            Integer idCategoria,
+            Integer idSeguro,
+            Integer ano
+    ) {
+    }
 }

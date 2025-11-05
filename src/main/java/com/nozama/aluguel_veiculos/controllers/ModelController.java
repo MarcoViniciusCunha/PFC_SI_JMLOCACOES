@@ -2,7 +2,6 @@ package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Brand;
 import com.nozama.aluguel_veiculos.domain.Model;
-import com.nozama.aluguel_veiculos.dto.ModelPatchRequest;
 import com.nozama.aluguel_veiculos.dto.ModelRequest;
 import com.nozama.aluguel_veiculos.repository.BrandRepository;
 import com.nozama.aluguel_veiculos.repository.ModelRepository;
@@ -54,7 +53,7 @@ public class ModelController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody ModelPatchRequest request) {
+    public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody ModelRequest.update request) {
         Optional<Model> existing = repository.findById(id);
         if (existing.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Modelo não encontrado.");

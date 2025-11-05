@@ -1,7 +1,6 @@
 package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
-import com.nozama.aluguel_veiculos.dto.CustomerPatchRequest;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -65,7 +64,7 @@ public class CustomerService {
        return customers;
     }
 
-    public Customer update(Long id, CustomerPatchRequest request){
+    public Customer update(Long id, CustomerRequest.update request){
         Customer existing = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
 
