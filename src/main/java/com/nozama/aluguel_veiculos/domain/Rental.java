@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class Rental {
 
     private LocalDate returnDate = null;
 
-    private Double price;
+    private BigDecimal price;
 
     private boolean returned = false;
 
@@ -55,6 +56,6 @@ public class Rental {
         this.customer = customer;
         this.startDate = request.startDate();
         this.endDate = request.endDate();
-        this.price = request.price();
+        this.price = BigDecimal.ZERO;
     }
 }

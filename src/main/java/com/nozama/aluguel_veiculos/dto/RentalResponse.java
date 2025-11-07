@@ -3,6 +3,7 @@ package com.nozama.aluguel_veiculos.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.nozama.aluguel_veiculos.domain.Rental;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -14,7 +15,7 @@ public record RentalResponse(Long id,
                              LocalDate startDate,
                              LocalDate endDate,
                              LocalDate returnedDate,
-                             Double price,
+                             BigDecimal price,
                              boolean returned,
                              String status,
                              List<FineResponse> fines,

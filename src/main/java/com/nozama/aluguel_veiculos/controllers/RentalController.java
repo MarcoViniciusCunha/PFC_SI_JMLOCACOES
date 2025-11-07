@@ -19,7 +19,7 @@ public class RentalController {
 
     private RentalService service;
 
-    public RentalController(RentalService service, RentalRepository repository){
+    public RentalController(RentalService service){
         this.service = service;
     }
 

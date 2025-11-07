@@ -17,7 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -41,14 +44,22 @@ public class RentalService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Veículo não disponível para aluguel.");
         }
 
-        vehicle.setStatus(VehicleStatus.ALUGADO);
+        if (!request.endDate().isAfter(request.startDate())){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A data final deve ser posterior à data inicial");
+        }
 
+        long dias = ChronoUnit.DAYS.between(request.startDate(), request.endDate());
+
+        BigDecimal valorDiario = vehicle.getValorDiario();
+        BigDecimal valorTotal = valorDiario.multiply(BigDecimal.valueOf(dias));
+
+        vehicle.setStatus(VehicleStatus.ALUGADO);
         Customer customer = findCustomer(request.cpf());
 
         Rental rental = new Rental(vehicle, customer, request);
+        rental.setPrice(valorTotal);
 
         Rental saved = rentalRepository.save(rental);
-
         vehicleRepository.save(vehicle);
         return saved;
     }
@@ -66,29 +77,27 @@ public class RentalService {
         Vehicle vehicle = rental.getVehicle();
         vehicle.setStatus(VehicleStatus.DISPONIVEL);
 
+        vehicleRepository.save(vehicle);
         return rentalRepository.save(rental);
     }
 
     @Transactional
-    public Rental update(Long id, RentalRequest.update request){
+    public Rental update(Long id, RentalRequest.update request) {
         Rental rental = findRentalById(id);
-        if (rental.isReturned()){
+
+        if (rental.isReturned()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível editar uma locação já devolvida.");
         }
-        if (!rental.getStartDate().isAfter(LocalDate.now().minusDays(1))){
+
+        if (!rental.getStartDate().isAfter(LocalDate.now().minusDays(1))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível alterar uma locação já iniciada.");
         }
 
-        if(request.startDate() != null) rental.setStartDate(request.startDate());
-        if(request.endDate() != null) rental.setEndDate(request.endDate());
-        if(request.price() != null) rental.setPrice(request.price());
-
-        if (request.placa() != null){
+        if (request.placa() != null) {
             Vehicle oldVehicle = rental.getVehicle();
-
             Vehicle newVehicle = findVehicle(request.placa());
 
-            if (newVehicle.getStatus() != VehicleStatus.DISPONIVEL){
+            if (newVehicle.getStatus() != VehicleStatus.DISPONIVEL) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Veículo não disponível para aluguel.");
             }
 
@@ -96,17 +105,33 @@ public class RentalService {
             vehicleRepository.save(oldVehicle);
 
             newVehicle.setStatus(VehicleStatus.ALUGADO);
-
             rental.setVehicle(newVehicle);
         }
 
-        if (request.cpf() != null){
+        if (request.cpf() != null) {
             Customer customer = findCustomer(request.cpf());
             rental.setCustomer(customer);
         }
 
+        if (request.startDate() != null) rental.setStartDate(request.startDate());
+        if (request.endDate() != null) rental.setEndDate(request.endDate());
+
+        if (rental.getStartDate() != null && rental.getEndDate() != null) {
+            if (!rental.getEndDate().isAfter(rental.getStartDate())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A data final deve ser posterior à data inicial.");
+            }
+
+            long dias = ChronoUnit.DAYS.between(rental.getStartDate(), rental.getEndDate());
+            BigDecimal valorTotal = rental.getVehicle().getValorDiario()
+                    .multiply(BigDecimal.valueOf(dias))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            rental.setPrice(valorTotal);
+        }
+
         return rentalRepository.save(rental);
     }
+
 
     public void deleteById(Long id){
         Rental rental = findRentalById(id);

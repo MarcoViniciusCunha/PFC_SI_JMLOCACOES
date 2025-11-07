@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.*;
 import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.VehicleFilter;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
+import com.nozama.aluguel_veiculos.dto.VehicleResponse;
 import com.nozama.aluguel_veiculos.repository.*;
 import com.nozama.aluguel_veiculos.specification.VehicleSpecification;
 import jakarta.transaction.Transactional;
@@ -74,14 +75,40 @@ public class VehicleService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
     }
 
-    public List<Vehicle> searchVehicles(VehicleFilter filter) {
+    public List<VehicleResponse> searchVehicles(
+            String placa,
+            String categoria,
+            String brand,
+            String color,
+            Integer ano,
+            String status) {
+
+        VehicleFilter filter = new VehicleFilter();
+        filter.setPlaca(placa);
+
+        filter.setIdCategoria(parseInteger(categoria));
+        filter.setIdMarca(parseInteger(brand));
+        filter.setIdCor(parseInteger(color));
+        filter.setAno(ano);
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                filter.setStatus(VehicleStatus.fromString(status));
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status inválido: " + status);
+            }
+        }
+
         Specification<Vehicle> spec = VehicleSpecification.filter(filter);
         List<Vehicle> vehicles = vehicleRepository.findAll(spec);
 
-        if (vehicles.isEmpty()){
+        if (vehicles.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículos não encontrados.");
         }
-        return vehicles;
+
+        return vehicles.stream()
+                .map(VehicleResponse::fromEntity)
+                .toList();
     }
 
     @Transactional
@@ -131,6 +158,15 @@ public class VehicleService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado.");
         }
         vehicleRepository.deleteById(placa);
+    }
+
+    private Integer parseInteger(String value) {
+        if (value == null || value.isEmpty()) return null;
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parâmetro inválido: " + value);
+        }
     }
 
 }

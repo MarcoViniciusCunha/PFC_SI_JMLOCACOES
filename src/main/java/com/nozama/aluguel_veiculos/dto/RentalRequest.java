@@ -16,22 +16,14 @@ public record RentalRequest(
         LocalDate startDate,
 
         @NotNull(message = "Insira a data final")
-        LocalDate endDate,
-
-        @NotNull(message = "Insira o valor")
-        Double price
+        LocalDate endDate
 
 ) {
     public record update(
             String placa,
-
             String cpf,
-
             LocalDate startDate,
-
-            LocalDate endDate,
-
-            Double price
+            LocalDate endDate
     ) {
     }
 }
