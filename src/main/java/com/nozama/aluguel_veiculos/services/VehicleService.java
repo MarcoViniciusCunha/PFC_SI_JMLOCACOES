@@ -79,6 +79,7 @@ public class VehicleService {
             String placa,
             String categoria,
             String brand,
+            String model,
             String color,
             Integer ano,
             String status) {
@@ -88,6 +89,7 @@ public class VehicleService {
 
         filter.setIdCategoria(parseInteger(categoria));
         filter.setIdMarca(parseInteger(brand));
+        filter.setIdModelo(parseInteger(model));
         filter.setIdCor(parseInteger(color));
         filter.setAno(ano);
 

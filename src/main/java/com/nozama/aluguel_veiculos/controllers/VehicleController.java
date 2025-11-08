@@ -51,11 +51,12 @@ public class VehicleController {
             @RequestParam(required = false) String placa,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String model,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer ano,
             @RequestParam(required = false) String status) {
 
-        List<VehicleResponse> vehicles = service.searchVehicles(placa, categoria, brand, color, ano, status);
+        List<VehicleResponse> vehicles = service.searchVehicles(placa, categoria, brand, model, color, ano, status);
         return ResponseEntity.ok(vehicles);
     }
 
