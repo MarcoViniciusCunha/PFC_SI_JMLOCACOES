@@ -155,25 +155,28 @@ public class RentalService {
     }
 
     public Page<RentalResponse> listRentals(String cpf, String placa, String status, Pageable pageable) {
+        LocalDate today = LocalDate.now();
+        Page<Rental> rentals;
 
-
-        Boolean returned = null;
         if (status != null) {
             switch (status.toUpperCase()) {
-                case "DEVOLVIDA" -> returned = true;
-                case "ATIVA" -> returned = false;
+                case "DEVOLVIDA":
+                    rentals = rentalRepository.findFiltered(cpf, placa, true, pageable );
+                    break;
+                case "ATIVA":
+                    rentals = rentalRepository.findAtivas(cpf, placa, today, pageable );
+                    break;
+                case "ATRASADA" :
+                    rentals = rentalRepository.findAtrasadas(cpf, placa, today, pageable );
+                    break;
+                default:
+                    rentals = rentalRepository.findFiltered(cpf, placa, null, pageable );
             }
+        } else {
+            rentals = rentalRepository.findFiltered(cpf, placa, null, pageable );
         }
 
-        Page<Rental> rentals = rentalRepository.findFiltered(cpf, placa, returned, pageable);
-
-        // Mapeia cada Rental para RentalResponse completo
-        List<RentalResponse> filtered = rentals.stream()
-                .map(RentalResponse::fromEntityBasic)
-                .filter(rr -> status == null || rr.status().equalsIgnoreCase(status))
-                .toList();
-
-        return new PageImpl<>(filtered, pageable, filtered.size());
+        return rentals.map(RentalResponse::fromEntityBasic);
     }
 
     public Rental findRentalById(Long id) {

@@ -35,4 +35,33 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
             @Param("placa") String placa,
             @Param("data_multa")LocalDate data_multa
             );
+
+    @Query("""
+    SELECT r FROM Rental r
+    WHERE (:cpf IS NULL OR r.customer.cpf = :cpf)
+      AND (:placa IS NULL OR r.vehicle.placa = :placa)
+      AND r.returned = false
+      AND r.endDate >= :hoje
+""")
+    Page<Rental> findAtivas(
+            @Param("cpf") String cpf,
+            @Param("placa") String placa,
+            @Param("hoje") LocalDate hoje,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT r FROM Rental r
+    WHERE (:cpf IS NULL OR r.customer.cpf = :cpf)
+      AND (:placa IS NULL OR r.vehicle.placa = :placa)
+      AND r.returned = false
+      AND r.endDate < :hoje
+""")
+    Page<Rental> findAtrasadas(
+            @Param("cpf") String cpf,
+            @Param("placa") String placa,
+            @Param("hoje") LocalDate hoje,
+            Pageable pageable
+    );
+
 }
