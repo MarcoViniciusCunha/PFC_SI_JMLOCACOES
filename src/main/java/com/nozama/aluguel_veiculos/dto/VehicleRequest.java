@@ -31,7 +31,7 @@ public record VehicleRequest(
         Integer idCategoria,
 
         @NotNull(message = "Informe o seguro do veículo.")
-        Integer idSeguro,
+        Long idSeguro,
 
         @NotNull(message = "Informe o valor da diaria do veículo")
         BigDecimal valorDiario
@@ -43,7 +43,7 @@ public record VehicleRequest(
             String status,
             String descricao,
             Integer idCategoria,
-            Integer idSeguro,
+            Long idSeguro,
             Integer ano,
             BigDecimal valorDiario
     ) {

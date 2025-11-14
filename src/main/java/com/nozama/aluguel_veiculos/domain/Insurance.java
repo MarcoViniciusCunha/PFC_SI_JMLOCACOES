@@ -19,16 +19,18 @@ import java.time.LocalDate;
 public class Insurance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    private String empresa;
+    @ManyToOne
+    @JoinColumn(name = "company_id", nullable = false)
+    private InsuranceCompany company;
 
     private BigDecimal valor;
 
     private LocalDate validade;
 
-    public Insurance(InsuranceRequest request) {
-        this.empresa = request.empresa();
+    public Insurance(InsuranceRequest request, InsuranceCompany company) {
+        this.company = company;
         this.valor = request.valor();
         this.validade = request.validade();
     }

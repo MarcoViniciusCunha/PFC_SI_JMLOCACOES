@@ -36,7 +36,7 @@ public class AuthController {
 
         // se user n existe ou senha n é igual retorna erro 401 e mensagem
         if(user == null || !passwordEncoder.matches(loginRequest.password(), user.getPassword())){
-            return ResponseEntity.status(401).body(Map.of("message", "Email ou senha inválidos."));
+            return ResponseEntity.status(401).body(Map.of("message", "Nome de usuário ou senha inválidos."));
         }
 
         // gera token com base no email

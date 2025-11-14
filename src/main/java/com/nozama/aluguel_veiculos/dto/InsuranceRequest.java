@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record InsuranceRequest(
-        @NotBlank(message = "Informe a empresa do seguro")
-        String empresa,
+        @NotNull(message = "Informe o ID da seguradora")
+        Integer companyId,
 
         @NotNull(message = "Informe o valor do seguro")
         BigDecimal valor,

@@ -31,18 +31,18 @@ public class InsuranceController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Insurance> getById(@PathVariable int id) {
+    public ResponseEntity<Insurance> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Insurance> update(@PathVariable int id, @RequestBody Map<String, Object> update) {
+    public ResponseEntity<Insurance> update(@PathVariable Long id, @RequestBody Map<String, Object> update) {
         return ResponseEntity.ok(service.update(id, update));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Insurance> delete(@PathVariable int id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.deleteByID(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

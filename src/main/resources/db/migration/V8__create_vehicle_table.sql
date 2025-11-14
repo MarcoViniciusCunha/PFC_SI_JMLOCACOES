@@ -1,7 +1,7 @@
 CREATE TABLE vehicle (
     placa VARCHAR(10) PRIMARY KEY,
     id_categoria INT NOT NULL,
-    id_seguro INT NOT NULL,
+    id_seguro BIGINT NOT NULL,
     id_brand INT NOT NULL,
     id_modelo INT NOT NULL,
     ano INT,

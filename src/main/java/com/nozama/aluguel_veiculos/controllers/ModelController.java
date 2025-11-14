@@ -2,9 +2,11 @@ package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Brand;
 import com.nozama.aluguel_veiculos.domain.Model;
+import com.nozama.aluguel_veiculos.domain.Vehicle;
 import com.nozama.aluguel_veiculos.dto.ModelRequest;
 import com.nozama.aluguel_veiculos.repository.BrandRepository;
 import com.nozama.aluguel_veiculos.repository.ModelRepository;
+import com.nozama.aluguel_veiculos.repository.VehicleRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +21,12 @@ public class ModelController {
 
     private final ModelRepository repository;
     private final BrandRepository brandRepository;
+    private final VehicleRepository vehicleRepository;
 
-    public ModelController(ModelRepository repository, BrandRepository brandRepository) {
+    public ModelController(ModelRepository repository, BrandRepository brandRepository, VehicleRepository vehicleRepository) {
         this.repository = repository;
         this.brandRepository = brandRepository;
+        this.vehicleRepository = vehicleRepository;
     }
 
     @PostMapping
@@ -60,6 +64,7 @@ public class ModelController {
         }
 
         Model model = existing.get();
+        boolean brandChanged = false;
 
         if (request.nome() != null && !request.nome().isBlank()) {
             model.setNome(request.nome());
@@ -68,12 +73,29 @@ public class ModelController {
         if (request.brandId() != null) {
             Optional<Brand> brand = brandRepository.findById(request.brandId());
             if (brand.isEmpty()) return ResponseEntity.badRequest().body("Marca não encontrada.");
-            model.setBrand(brand.get());
+
+            if (!model.getBrand().getId().equals(request.brandId())) {
+                model.setBrand(brand.get());
+                brandChanged = true;
+            }
         }
 
         Model saved = repository.save(model);
+
+        if (brandChanged) {
+            List<Vehicle> vehicles = vehicleRepository.findAll().stream()
+                    .filter(v -> v.getModel().getId().equals(model.getId()))
+                    .toList();
+
+            vehicles.forEach(v -> v.setBrand(model.getBrand()));
+
+            // Salva todas as alterações no banco
+            vehicleRepository.saveAll(vehicles);
+        }
+
         return ResponseEntity.ok().body(saved);
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {

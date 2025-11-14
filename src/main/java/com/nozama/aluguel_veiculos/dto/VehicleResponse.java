@@ -43,7 +43,7 @@ public record VehicleResponse(
                 ),
                 new InsuranceResponse(
                         vehicle.getInsurance().getId(),
-                        vehicle.getInsurance().getEmpresa(),
+                        vehicle.getInsurance().getCompany().getName(),
                         vehicle.getInsurance().getValor(),
                         vehicle.getInsurance().getValidade()
                 ),
@@ -55,5 +55,5 @@ public record VehicleResponse(
     public record ModelResponse(Integer id, String nome) {}
     public record ColorResponse(Integer id, String nome) {}
     public record CategoryResponse(Integer id, String nome, String descricao) {}
-    public record InsuranceResponse(Integer id, String empresa, BigDecimal valor, LocalDate validade) {}
+    public record InsuranceResponse(Long id, String empresa, BigDecimal valor, LocalDate validade) {}
 }
