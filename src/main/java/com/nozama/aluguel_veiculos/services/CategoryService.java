@@ -3,6 +3,7 @@ package com.nozama.aluguel_veiculos.services;
 import com.nozama.aluguel_veiculos.domain.Category;
 import com.nozama.aluguel_veiculos.dto.CategoryRequest;
 import com.nozama.aluguel_veiculos.repository.CategoryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -11,12 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
-    private final CategoryRepository repository;
 
-    public CategoryService(CategoryRepository repository) {
-        this.repository = repository;
-    }
+    private final CategoryRepository repository;
 
     public Category create(CategoryRequest request) {
         if (repository.existsByNome(request.nome())) {
@@ -32,7 +31,7 @@ public class CategoryService {
         return repository.findAll();
     }
 
-    public Category patchById(int id, CategoryRequest request) {
+    public Category update(int id, CategoryRequest request) {
         Category category = findById(id);
 
         if (request.nome() != null && !request.nome().isBlank()) {

@@ -49,21 +49,20 @@ class VehicleServiceTest {
         when(request.idMarca()).thenReturn(2);
         when(request.idModelo()).thenReturn(3);
         when(request.idCor()).thenReturn(4);
-        when(request.idSeguro()).thenReturn(5);
+        when(request.idSeguro()).thenReturn(5L);
         when(request.placa()).thenReturn("ABC1234");
         when(request.descricao()).thenReturn("Carro novo");
         when(request.ano()).thenReturn(2023);
         when(request.valorDiario()).thenReturn(null);
-        when(request.status()).thenReturn("DISPONIVEL"); // 🔑 importante pra não quebrar
+        when(request.status()).thenReturn("DISPONIVEL");
 
-        // Mocks dos repositórios
         Category category = new Category();
         category.setId(1);
         when(categoryRepository.findById(1)).thenReturn(Optional.of(category));
 
         Insurance insurance = new Insurance();
-        insurance.setId(5);
-        when(insuranceRepository.findById(5)).thenReturn(Optional.of(insurance));
+        insurance.setId(5L);
+        when(insuranceRepository.findById(5L)).thenReturn(Optional.of(insurance));
 
         Brand brand = new Brand();
         brand.setId(2);

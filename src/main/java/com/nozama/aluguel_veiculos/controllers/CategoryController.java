@@ -44,7 +44,7 @@ public class CategoryController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<Category> update(@PathVariable Integer id, @RequestBody @Valid CategoryRequest categoryRequest) {
-        Category updated = categoryService.patchById(id, categoryRequest);
+        Category updated = categoryService.update(id, categoryRequest);
         return ResponseEntity.ok().body(updated);
     }
 

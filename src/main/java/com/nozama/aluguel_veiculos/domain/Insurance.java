@@ -26,7 +26,6 @@ public class Insurance {
     private InsuranceCompany company;
 
     private BigDecimal valor;
-
     private LocalDate validade;
 
     public Insurance(InsuranceRequest request, InsuranceCompany company) {

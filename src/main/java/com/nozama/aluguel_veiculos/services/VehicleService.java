@@ -8,7 +8,9 @@ import com.nozama.aluguel_veiculos.dto.VehicleResponse;
 import com.nozama.aluguel_veiculos.repository.*;
 import com.nozama.aluguel_veiculos.specification.VehicleSpecification;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,54 +18,24 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final CategoryRepository categoryRepository;
     private final InsuranceRepository insuranceRepository;
-    private final BrandRepository markRepository;
+    private final BrandRepository brandRepository;
     private final ColorRepository colorRepository;
     private final ModelRepository modelRepository;
 
-    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository, BrandRepository markRepository, ColorRepository colorRepository, ModelRepository modelRepository) {
-        this.vehicleRepository = vehicleRepository;
-        this.categoryRepository = categoryRepository;
-        this.insuranceRepository = insuranceRepository;
-        this.markRepository = markRepository;
-        this.colorRepository = colorRepository;
-        this.modelRepository = modelRepository;
-    }
-
     public Vehicle create(VehicleRequest request){
-        Category category = categoryRepository.findById(request.idCategoria())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada."));
+        Category category = findCategory(request.idCategoria());
+        Insurance insurance = findOptional(insuranceRepository, request.idSeguro());
+        Brand brand = findOptional(brandRepository, request.idMarca());
+        Color color = findOptional(colorRepository, request.idCor());
+        Model model = findOptional(modelRepository, request.idModelo());
 
-        Insurance insurance = null;
-        if (request.idSeguro() != null){
-            insurance = insuranceRepository.findById(request.idSeguro())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seguro não encontrado"));
-        }
-
-        Brand mark = null;
-        if (request.idMarca() != null){
-            mark = markRepository.findById(request.idMarca())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrado"));
-        }
-
-        Color color = null;
-        if (request.idCor() != null){
-            color = colorRepository.findById(request.idCor())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cor não encontrado"));
-        }
-
-        Model model = null;
-        if (request.idModelo() != null){
-            model = modelRepository.findById(request.idModelo())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado"));
-        }
-
-        Vehicle vehicle = new Vehicle(request, category, insurance, mark, color, model);
-        return vehicleRepository.save(vehicle);
+        return vehicleRepository.save(new Vehicle(request, category, insurance, brand, color, model));
     }
 
     public List<Vehicle> findAll(){
@@ -76,17 +48,11 @@ public class VehicleService {
     }
 
     public List<VehicleResponse> searchVehicles(
-            String placa,
-            String categoria,
-            String brand,
-            String model,
-            String color,
-            Integer ano,
-            String status) {
+            String placa, String categoria, String brand, String model,
+            String color, Integer ano, String status) {
 
         VehicleFilter filter = new VehicleFilter();
         filter.setPlaca(placa);
-
         filter.setIdCategoria(parseInteger(categoria));
         filter.setIdMarca(parseInteger(brand));
         filter.setIdModelo(parseInteger(model));
@@ -108,50 +74,22 @@ public class VehicleService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículos não encontrados.");
         }
 
-        return vehicles.stream()
-                .map(VehicleResponse::fromEntity)
-                .toList();
+        return vehicles.stream().map(VehicleResponse::fromEntity).toList();
     }
 
     @Transactional
     public Vehicle updateVehicle(String placa, VehicleRequest.update request) {
-        Vehicle vehicle = vehicleRepository.findById(placa)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
+        Vehicle vehicle = findById(placa);
 
-        if (request.status() != null){
-            vehicle.setStatus(VehicleStatus.valueOf(request.status().toUpperCase()));
-        }
-        if (request.descricao() != null){
-            vehicle.setDescricao(request.descricao());
-        }
-        if (request.idCategoria() != null){
-            Category category = categoryRepository.findById(request.idCategoria())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada."));
-            vehicle.setCategory(category);
-        }
-        if (request.idMarca() != null){
-            Brand mark = markRepository.findById(request.idMarca())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada."));
-            vehicle.setBrand(mark);
-        }
-        if (request.idSeguro() != null){
-            Insurance insurance = insuranceRepository.findById(request.idSeguro())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seguro não encontrado."));
-            vehicle.setInsurance(insurance);
-        }
-        if (request.idCor() != null){
-            Color color = colorRepository.findById(request.idCor())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cor não encontrada."));
-            vehicle.setColor(color);
-        }
-        if (request.idModelo() != null){
-            Model model = modelRepository.findById(request.idModelo())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado."));
-            vehicle.setModel(model);
-        }
-        if (request.ano() != null){
-            vehicle.setAno(request.ano());
-        }
+        if (request.status() != null) vehicle.setStatus(VehicleStatus.valueOf(request.status().toUpperCase()));
+        if (request.descricao() != null) vehicle.setDescricao(request.descricao());
+        if (request.ano() != null) vehicle.setAno(request.ano());
+        if (request.idCategoria() != null) vehicle.setCategory(findCategory(request.idCategoria()));
+        if (request.idMarca() != null) vehicle.setBrand(findBrand(request.idMarca()));
+        if (request.idCor() != null) vehicle.setColor(findColor(request.idCor()));
+        if (request.idModelo() != null) vehicle.setModel(findModel(request.idModelo()));
+        if (request.idSeguro() != null) vehicle.setInsurance(findInsurance(request.idSeguro()));
+
         return vehicleRepository.save(vehicle);
     }
 
@@ -170,5 +108,16 @@ public class VehicleService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parâmetro inválido: " + value);
         }
     }
+
+    private <T, ID> T findOptional(JpaRepository<T, ID> repo, ID id) {
+        if (id == null) return null;
+        return repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro não encontrado."));
+    }
+
+    private Category findCategory(Integer id) { return findOptional(categoryRepository, id); }
+    private Brand findBrand(Integer id) { return findOptional(brandRepository, id); }
+    private Color findColor(Integer id) { return findOptional(colorRepository, id); }
+    private Model findModel(Integer id) { return findOptional(modelRepository, id); }
+    private Insurance findInsurance(Long id) { return findOptional(insuranceRepository, id); }
 
 }

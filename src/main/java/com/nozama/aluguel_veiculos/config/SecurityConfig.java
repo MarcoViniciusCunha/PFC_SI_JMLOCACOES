@@ -18,31 +18,29 @@ import java.util.List;
 
 
 @Configuration
-@EnableWebSecurity // segurança web do spring security
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
 
-    // codificar senhas com bcrypt e mandar para o banco
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // config de segurança da rotas
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> {})
-                .csrf(AbstractHttpConfigurer::disable) // desabilita o csrf
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/**", "/login").permitAll() // define rotas user e login n precisam autenticar
-                        .anyRequest().authenticated() // resto das rotas precisa de autenticação
+                        .requestMatchers("/user/**", "/login").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
-        return http.build(); // constrói e retorna filtro de segurança
+        return http.build();
     }
 
     @Bean
@@ -51,7 +49,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("http://localhost:5173"));
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true); // se usar cookies ou auth
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

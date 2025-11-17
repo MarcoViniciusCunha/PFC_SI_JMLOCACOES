@@ -3,9 +3,9 @@ package com.nozama.aluguel_veiculos.controllers;
 import com.nozama.aluguel_veiculos.domain.Rental;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
 import com.nozama.aluguel_veiculos.dto.RentalResponse;
-import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.services.RentalService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -15,30 +15,24 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/rental")
+@RequiredArgsConstructor
 public class RentalController {
 
-    private RentalService service;
-
-    public RentalController(RentalService service){
-        this.service = service;
-    }
+    private final RentalService service;
 
     @PostMapping
     public ResponseEntity<Rental> create(@RequestBody @Valid RentalRequest request){
-        Rental saved = service.create(request);
-        return ResponseEntity.ok().body(saved);
+        return ResponseEntity.ok(service.create(request));
     }
 
     @PatchMapping("/return/{id}")
     public ResponseEntity<Rental> returnVehicle(@PathVariable Long id){
-        Rental saved = service.returnVehicle(id);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(service.returnVehicle(id));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<Rental> update(@PathVariable Long id, @RequestBody RentalRequest.update request){
-        Rental update = service.update(id, request);
-        return ResponseEntity.ok(update);
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -49,23 +43,21 @@ public class RentalController {
 
     @GetMapping
     public ResponseEntity<List<RentalResponse>> getAll(){
-        List<RentalResponse> rentals = service.getAll();
-        return ResponseEntity.ok(rentals);
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RentalResponse> getById(@PathVariable Long id){
-        Rental rental = service.findRentalById(id);
-        return ResponseEntity.ok(RentalResponse.fromEntity(rental));
+        return ResponseEntity.ok(RentalResponse.fromEntity(service.findRentalById(id)));
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<Page<RentalResponse>> filter (@RequestParam(required = false) String cpf,
-                                                        @RequestParam(required = false) String placa,
-                                                        @RequestParam(required = false) String status,
-                                                        Pageable pageable){
-        Page<RentalResponse> rentals = service.listRentals(cpf, placa, status, pageable);
-        return ResponseEntity.ok(rentals);
+    public ResponseEntity<Page<RentalResponse>> filter (
+            @RequestParam(required = false) String cpf,
+            @RequestParam(required = false) String placa,
+            @RequestParam(required = false) String status,
+            Pageable pageable){
+        return ResponseEntity.ok(service.listRentals(cpf, placa, status, pageable));
     }
 
 }

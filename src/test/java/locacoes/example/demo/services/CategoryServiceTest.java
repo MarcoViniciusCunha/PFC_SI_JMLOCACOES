@@ -98,7 +98,7 @@ public class CategoryServiceTest {
         when(repository.findByNome("Sedan")).thenReturn(Optional.empty());
         when(repository.save(any(Category.class))).thenReturn(category);
 
-        Category result = service.patchById(1, request);
+        Category result = service.update(1, request);
 
         assertThat(result.getNome()).isEqualTo("Sedan");
         assertThat(result.getDescricao()).isEqualTo("Atualizada");
@@ -116,7 +116,7 @@ public class CategoryServiceTest {
         CategoryRequest request = new CategoryRequest("Sedan", "Nova descrição");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> service.patchById(1, request));
+                () -> service.update(1, request));
 
         assertThat(ex.getReason()).contains("já existe");
         System.out.println("✅ patchById(): Lançou exceção corretamente para nome duplicado.");

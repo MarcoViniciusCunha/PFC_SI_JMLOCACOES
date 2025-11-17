@@ -6,42 +6,36 @@ import com.nozama.aluguel_veiculos.dto.LoginResponse;
 import com.nozama.aluguel_veiculos.dto.UserRequest;
 import com.nozama.aluguel_veiculos.repository.UserRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping("/login") // endpoints /login
+@RequestMapping("/login")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final Jwt jwt;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, Jwt jwt){
-    this.userRepository = userRepository;
-    this.passwordEncoder = passwordEncoder;
-    this.jwt = jwt;
-    }
-
-    @PostMapping //Post para autenticação
+    @PostMapping
     public ResponseEntity<?> login(@RequestBody @Valid UserRequest loginRequest) {
-        // busca no bd pelo email informado
         User user = userRepository.findByUsername(loginRequest.username());
 
-        // se user n existe ou senha n é igual retorna erro 401 e mensagem
-        if(user == null || !passwordEncoder.matches(loginRequest.password(), user.getPassword())){
-            return ResponseEntity.status(401).body(Map.of("message", "Nome de usuário ou senha inválidos."));
+        if (user == null || !passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nome de usuário ou senha inválidos.");
         }
 
-        // gera token com base no email
         String token = jwt.generateToken(user.getUsername());
-        // retorna o token com resposta 200 0k
         return ResponseEntity.ok(new LoginResponse(token));
     }
 }

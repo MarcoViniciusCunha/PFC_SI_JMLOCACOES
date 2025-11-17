@@ -14,10 +14,6 @@ public record PaymentRequest(
         @NotNull(message = "Insira a data do pagamento")
         LocalDate dataPagamento,
 
-        @Positive(message = "O valor precisa ser positivo")
-        @NotNull(message = "Insira o valor do pagamento")
-        BigDecimal valor,
-
         @NotBlank(message = "Insira a forma de pagamento")
         String formaPagto,
 
@@ -26,7 +22,11 @@ public record PaymentRequest(
 
         Integer parcelas,
 
-        String descricao
+        String descricao,
+
+        @Positive(message = "O juros precisa ser positivo")
+        BigDecimal juros
+
 ) {
     public record update(
             Long rentalId,
@@ -36,7 +36,8 @@ public record PaymentRequest(
             String formaPagto,
             String status,
             Integer parcelas,
-            String descricao
+            String descricao,
+            BigDecimal juros
     ){
 
     }

@@ -41,7 +41,7 @@ public class Payment {
     public Payment(Rental rental, PaymentRequest request){
         this.rental = rental;
         this.data_pagamento = request.dataPagamento();
-        this.valor = request.valor();
+        this.valor = rental.getPrice();
         this.formaPagto = request.formaPagto();
         this.status = request.status();
         this.parcelas = request.parcelas();

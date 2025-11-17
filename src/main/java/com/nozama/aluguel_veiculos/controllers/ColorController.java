@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.Color;
 import com.nozama.aluguel_veiculos.dto.ColorRequest;
 import com.nozama.aluguel_veiculos.repository.ColorRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,23 +14,18 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/color")
+@RequiredArgsConstructor
 public class ColorController {
 
     private final ColorRepository repository;
 
-    public ColorController(ColorRepository repository) {
-        this.repository = repository;
-    }
-
     @PostMapping
     public ResponseEntity<?> create(@RequestBody @Valid ColorRequest request) {
-        if (repository.existsByNome(request.nome())){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Cor '" + request.nome() + "' já existe!");
+        if (repository.existsByNome(request.nome())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Cor '" + request.nome() + "' já existe!");
         }
-
-        Color color = new Color(request);
-        Color saved = repository.save(color);
-        return ResponseEntity.ok().body(saved);
+        return ResponseEntity.ok(repository.save(new Color(request)));
     }
 
     @GetMapping
@@ -39,9 +35,9 @@ public class ColorController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Color> getById(@PathVariable Integer id) {
-        Optional<Color> existing = repository.findById(id);
-        if (existing.isPresent()) {
-            return ResponseEntity.ok(existing.get());
+        Optional<Color> color = repository.findById(id);
+        if (color.isPresent()) {
+            return ResponseEntity.ok(color.get());
         }
         return ResponseEntity.notFound().build();
     }

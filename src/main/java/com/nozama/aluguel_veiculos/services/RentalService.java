@@ -10,8 +10,8 @@ import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,52 +24,35 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class RentalService {
 
     private final RentalRepository rentalRepository;
     private final VehicleRepository vehicleRepository;
     private final CustomerRepository customerRepository;
 
-    public RentalService(RentalRepository rentalRepository, VehicleRepository vehicleRepository, CustomerRepository customerRepository){
-        this.rentalRepository =  rentalRepository;
-        this.vehicleRepository = vehicleRepository;
-        this.customerRepository = customerRepository;
-    }
-
     @Transactional
     public Rental create(RentalRequest request){
         Vehicle vehicle = findVehicle(request.placa());
+        validateVehicleAvailability(vehicle);
 
-        if (vehicle.getStatus() != VehicleStatus.DISPONIVEL){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Veículo não disponível para aluguel.");
-        }
+        validateDates(request.startDate(), request.endDate());
 
-        if (!request.endDate().isAfter(request.startDate())){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A data final deve ser posterior à data inicial");
-        }
-
-        long dias = ChronoUnit.DAYS.between(request.startDate(), request.endDate());
-
-        BigDecimal valorDiario = vehicle.getValorDiario();
-        BigDecimal valorTotal = valorDiario.multiply(BigDecimal.valueOf(dias));
+        Customer customer = findCustomer(request.cpf());
+        BigDecimal price = calculatePrice(vehicle.getValorDiario(), request.startDate(), request.endDate());
 
         vehicle.setStatus(VehicleStatus.ALUGADO);
-        Customer customer = findCustomer(request.cpf());
-
         Rental rental = new Rental(vehicle, customer, request);
-        rental.setPrice(valorTotal);
+        rental.setPrice(price);
 
-        Rental saved = rentalRepository.save(rental);
         vehicleRepository.save(vehicle);
-        return saved;
+        return rentalRepository.save(rental);
     }
 
     @Transactional
     public Rental returnVehicle(Long id){
         Rental rental = findRentalById(id);
-        if (rental.isReturned()){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Veículo já foi devolvido.");
-        }
+        if (rental.isReturned()) throwBadRequest("Veículo já foi devolvido.");
 
         rental.setReturned(true);
         rental.setReturnDate(LocalDate.now());
@@ -84,65 +67,29 @@ public class RentalService {
     @Transactional
     public Rental update(Long id, RentalRequest.update request) {
         Rental rental = findRentalById(id);
+        validateRentalEditable(rental);
 
-        if (rental.isReturned()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível editar uma locação já devolvida.");
-        }
-
-        if (!rental.getStartDate().isAfter(LocalDate.now().minusDays(1))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível alterar uma locação já iniciada.");
-        }
-
-        if (request.placa() != null) {
-            Vehicle oldVehicle = rental.getVehicle();
-            Vehicle newVehicle = findVehicle(request.placa());
-
-            if (newVehicle.getStatus() != VehicleStatus.DISPONIVEL) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Veículo não disponível para aluguel.");
-            }
-
-            oldVehicle.setStatus(VehicleStatus.DISPONIVEL);
-            vehicleRepository.save(oldVehicle);
-
-            newVehicle.setStatus(VehicleStatus.ALUGADO);
-            rental.setVehicle(newVehicle);
-        }
-
-        if (request.cpf() != null) {
-            Customer customer = findCustomer(request.cpf());
-            rental.setCustomer(customer);
-        }
-
+        if (request.placa() != null) updateVehicle(rental, request.placa());
+        if (request.cpf() != null) rental.setCustomer(findCustomer(request.cpf()));
         if (request.startDate() != null) rental.setStartDate(request.startDate());
         if (request.endDate() != null) rental.setEndDate(request.endDate());
 
         if (rental.getStartDate() != null && rental.getEndDate() != null) {
-            if (!rental.getEndDate().isAfter(rental.getStartDate())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A data final deve ser posterior à data inicial.");
-            }
-
-            long dias = ChronoUnit.DAYS.between(rental.getStartDate(), rental.getEndDate());
-            BigDecimal valorTotal = rental.getVehicle().getValorDiario()
-                    .multiply(BigDecimal.valueOf(dias))
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            rental.setPrice(valorTotal);
+            validateDates(rental.getStartDate(), rental.getEndDate());
+            rental.setPrice(calculatePrice(rental.getVehicle().getValorDiario(), rental.getStartDate(), rental.getEndDate()));
         }
 
         return rentalRepository.save(rental);
     }
 
-
     public void deleteById(Long id){
         Rental rental = findRentalById(id);
 
-        if (!rental.getStartDate().isAfter(LocalDate.now())){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não é possível deletar uma locação já iniciada.");
+        if (!rental.getStartDate().isAfter(LocalDate.now())) {
+            throwBadRequest("Não é possível deletar uma locação já iniciada.");
         }
-        if (!rental.isReturned()){
-            Vehicle vehicle = rental.getVehicle();
-            vehicle.setStatus(VehicleStatus.DISPONIVEL);
-        }
+
+        if (!rental.isReturned()) rental.getVehicle().setStatus(VehicleStatus.DISPONIVEL);
 
         rentalRepository.deleteById(id);
     }
@@ -158,22 +105,11 @@ public class RentalService {
         LocalDate today = LocalDate.now();
         Page<Rental> rentals;
 
-        if (status != null) {
-            switch (status.toUpperCase()) {
-                case "DEVOLVIDA":
-                    rentals = rentalRepository.findFiltered(cpf, placa, true, pageable );
-                    break;
-                case "ATIVA":
-                    rentals = rentalRepository.findAtivas(cpf, placa, today, pageable );
-                    break;
-                case "ATRASADA" :
-                    rentals = rentalRepository.findAtrasadas(cpf, placa, today, pageable );
-                    break;
-                default:
-                    rentals = rentalRepository.findFiltered(cpf, placa, null, pageable );
-            }
-        } else {
-            rentals = rentalRepository.findFiltered(cpf, placa, null, pageable );
+        switch (status == null ? "" : status.toUpperCase()) {
+            case "DEVOLVIDA" -> rentals = rentalRepository.findFiltered(cpf, placa, true, pageable);
+            case "ATIVA" -> rentals = rentalRepository.findAtivas(cpf, placa, today, pageable);
+            case "ATRASADA" -> rentals = rentalRepository.findAtrasadas(cpf, placa, today, pageable);
+            default -> rentals = rentalRepository.findFiltered(cpf, placa, null, pageable);
         }
 
         return rentals.map(RentalResponse::fromEntityBasic);
@@ -183,12 +119,48 @@ public class RentalService {
         return rentalRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Locação não encontrada."));
     }
+
     private Vehicle findVehicle(String placa) {
         return vehicleRepository.findById(placa)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
     }
+
     private Customer findCustomer(String cpf) {
         return customerRepository.findByCpf(cpf)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+    }
+
+    private void validateVehicleAvailability(Vehicle vehicle){
+        if (vehicle.getStatus() != VehicleStatus.DISPONIVEL) throwBadRequest("Veículo não disponível para aluguel.");
+    }
+
+    private void validateDates(LocalDate start, LocalDate end){
+        if (!end.isAfter(start)) throwBadRequest("A data final deve ser posterior à data inicial.");
+    }
+
+    private void validateRentalEditable(Rental rental){
+        if (rental.isReturned()) throwBadRequest("Não é possível editar uma locação já devolvida.");
+        if (!rental.getStartDate().isAfter(LocalDate.now().minusDays(1))) throwBadRequest("Não é possível alterar uma locação já iniciada.");
+    }
+
+    private void updateVehicle(Rental rental, String placa){
+        Vehicle oldVehicle = rental.getVehicle();
+        Vehicle newVehicle = findVehicle(placa);
+        validateVehicleAvailability(newVehicle);
+
+        oldVehicle.setStatus(VehicleStatus.DISPONIVEL);
+        vehicleRepository.save(oldVehicle);
+
+        newVehicle.setStatus(VehicleStatus.ALUGADO);
+        rental.setVehicle(newVehicle);
+    }
+
+    private BigDecimal calculatePrice(BigDecimal valorDiario, LocalDate start, LocalDate end){
+        long dias = ChronoUnit.DAYS.between(start, end);
+        return valorDiario.multiply(BigDecimal.valueOf(dias)).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private void throwBadRequest(String msg){
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg);
     }
 }

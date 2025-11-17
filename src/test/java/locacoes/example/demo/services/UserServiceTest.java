@@ -49,8 +49,8 @@ class UserServiceTest {
         assertEquals("murillo", result.getUsername());
         assertEquals("encoded_123456", result.getPassword());
 
-        System.out.println("✅ Esperado username: murillo | Obtido: " + result.getUsername());
-        System.out.println("🔐 Esperado password codificada: encoded_123456 | Obtido: " + result.getPassword());
+        System.out.println("Esperado username: murillo | Obtido: " + result.getUsername());
+        System.out.println("Esperado password codificada: encoded_123456 | Obtido: " + result.getPassword());
     }
 
     @Test
@@ -61,7 +61,7 @@ class UserServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> userService.create(request));
 
-        System.out.println("⚠️  Esperado erro: Já existe um usuário cadastrado | Recebido: " + ex.getMessage());
+        System.out.println("Esperado erro: Já existe um usuário cadastrado | Recebido: " + ex.getMessage());
     }
 
     @Test
@@ -73,7 +73,7 @@ class UserServiceTest {
 
         when(userRepository.findAll()).thenReturn(List.of(user1, user2));
 
-        List<User> result = userService.getUsers();
+        List<User> result = userService.getAll();
 
         assertEquals(2, result.size());
         System.out.println("📋 Esperado 2 usuários | Obtido: " + result.size());
@@ -87,7 +87,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("murillo")).thenReturn(user);
 
-        User result = userService.getUserByEmail("murillo");
+        User result = userService.getByUsername("murillo");
 
         assertNotNull(result);
         assertEquals("murillo", result.getUsername());

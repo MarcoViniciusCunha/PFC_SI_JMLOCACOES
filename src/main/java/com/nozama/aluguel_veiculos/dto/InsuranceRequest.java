@@ -9,10 +9,8 @@ import java.time.LocalDate;
 public record InsuranceRequest(
         @NotNull(message = "Informe o ID da seguradora")
         Integer companyId,
-
         @NotNull(message = "Informe o valor do seguro")
         BigDecimal valor,
-
         @NotNull(message = "Informe a validade do seguro")
         LocalDate validade
 ) {}

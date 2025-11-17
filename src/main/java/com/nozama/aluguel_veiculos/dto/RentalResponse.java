@@ -8,21 +8,27 @@ import java.time.LocalDate;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record RentalResponse(Long id,
-                             String placa,
-                             String modelo,
-                             String customerName,
-                             LocalDate startDate,
-                             LocalDate endDate,
-                             LocalDate returnedDate,
-                             BigDecimal price,
-                             boolean returned,
-                             String status,
-                             List<FineResponse> fines,
-                             List<InspectionResponse> inspections,
-                             List<PaymentResponse> payments
-    ) {
+public record RentalResponse(
+        Long id,
+        String placa,
+        String modelo,
+        String vehicleMarca,
+        Integer vehicleAno,
+        String customerName,
+        String customerCnh,
+        LocalDate startDate,
+        LocalDate endDate,
+        LocalDate returnedDate,
+        BigDecimal price,
+        boolean returned,
+        String status,
+        List<FineResponse> fines,
+        List<InspectionResponse> inspections,
+        List<PaymentResponse> payments
+) {
+
     public static RentalResponse fromEntity(Rental rental) {
+
         List<FineResponse> fines = rental.getFines().stream()
                 .map(FineResponse::fromEntitySummary)
                 .toList();
@@ -39,7 +45,10 @@ public record RentalResponse(Long id,
                 rental.getId(),
                 rental.getVehicle().getPlaca(),
                 rental.getVehicle().getModel().getNome(),
+                rental.getVehicle().getModel().getBrand().getNome(),
+                rental.getVehicle().getAno(),
                 rental.getCustomer().getNome(),
+                rental.getCustomer().getCnh(),
                 rental.getStartDate(),
                 rental.getEndDate(),
                 rental.getReturnDate(),
@@ -52,12 +61,16 @@ public record RentalResponse(Long id,
         );
     }
 
+    // Versão básica (sem listas)
     public static RentalResponse fromEntityBasic(Rental rental) {
         return new RentalResponse(
                 rental.getId(),
                 rental.getVehicle().getPlaca(),
                 rental.getVehicle().getModel().getNome(),
+                null, // vehicleMarca
+                null, // vehicleAno
                 rental.getCustomer().getNome(),
+                null, // customerCnh
                 rental.getStartDate(),
                 rental.getEndDate(),
                 rental.getReturnDate(),

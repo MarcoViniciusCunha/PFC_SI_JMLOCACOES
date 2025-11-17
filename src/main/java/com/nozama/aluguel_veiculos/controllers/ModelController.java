@@ -8,6 +8,7 @@ import com.nozama.aluguel_veiculos.repository.BrandRepository;
 import com.nozama.aluguel_veiculos.repository.ModelRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,17 +18,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/model")
+@RequiredArgsConstructor
 public class ModelController {
 
     private final ModelRepository repository;
     private final BrandRepository brandRepository;
     private final VehicleRepository vehicleRepository;
-
-    public ModelController(ModelRepository repository, BrandRepository brandRepository, VehicleRepository vehicleRepository) {
-        this.repository = repository;
-        this.brandRepository = brandRepository;
-        this.vehicleRepository = vehicleRepository;
-    }
 
     @PostMapping
     public ResponseEntity<?> create (@RequestBody @Valid ModelRequest request) {
@@ -35,14 +31,10 @@ public class ModelController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Modelo '" + request.nome() + "' já existe!");
         }
 
-        Optional<Brand> brand = brandRepository.findById(request.brandId());
-        if (brand.isEmpty()) {
-            return ResponseEntity.badRequest().body("Marca não encontrada.");
-        }
+        Brand brand = getBrandById(request.brandId());
 
-        Model model = new Model(request, brand.get());
-        Model saved = repository.save(model);
-        return ResponseEntity.ok().body(saved);
+        Model saved = repository.save(new Model(request, brand));
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping
@@ -52,30 +44,25 @@ public class ModelController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Model> getById(@PathVariable Integer id) {
-        Optional<Model> existing = repository.findById(id);
-        return existing.isPresent() ? ResponseEntity.ok().body(existing.get()) : ResponseEntity.notFound().build();
+        Model model = repository.findById(id).orElse(null);
+        if (model == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(model);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody ModelRequest.update request) {
-        Optional<Model> existing = repository.findById(id);
-        if (existing.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Modelo não encontrado.");
-        }
-
-        Model model = existing.get();
-        boolean brandChanged = false;
+        Model model = getModelById(id);
 
         if (request.nome() != null && !request.nome().isBlank()) {
             model.setNome(request.nome());
         }
 
+        boolean brandChanged = false;
         if (request.brandId() != null) {
-            Optional<Brand> brand = brandRepository.findById(request.brandId());
-            if (brand.isEmpty()) return ResponseEntity.badRequest().body("Marca não encontrada.");
+            Brand brand = getBrandById(request.brandId());
 
             if (!model.getBrand().getId().equals(request.brandId())) {
-                model.setBrand(brand.get());
+                model.setBrand(brand);
                 brandChanged = true;
             }
         }
@@ -88,8 +75,6 @@ public class ModelController {
                     .toList();
 
             vehicles.forEach(v -> v.setBrand(model.getBrand()));
-
-            // Salva todas as alterações no banco
             vehicleRepository.saveAll(vehicles);
         }
 
@@ -99,11 +84,20 @@ public class ModelController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        Optional<Model> existing = repository.findById(id);
-        if (existing.isPresent()) {
-            repository.deleteById(id);
-            return ResponseEntity.ok().build();
+        if (!repository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        return ResponseEntity.notFound().build();
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private Brand getBrandById(Integer id) {
+        return brandRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Marca não encontrada"));
+    }
+
+    private Model getModelById(Integer id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Modelo não encontrado"));
     }
 }

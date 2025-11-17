@@ -33,13 +33,9 @@ public class Rental {
     private Customer customer;
 
     private LocalDate startDate;
-
     private LocalDate endDate;
-
     private LocalDate returnDate = null;
-
     private BigDecimal price;
-
     private boolean returned = false;
 
     @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true)

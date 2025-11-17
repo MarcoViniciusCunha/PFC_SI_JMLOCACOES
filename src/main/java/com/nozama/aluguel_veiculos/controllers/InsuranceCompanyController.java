@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.InsuranceCompany;
 import com.nozama.aluguel_veiculos.dto.InsuranceCompanyRequest;
 import com.nozama.aluguel_veiculos.repository.InsuranceCompanyRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,22 +12,19 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/companies")
+@RequiredArgsConstructor
 public class InsuranceCompanyController {
-    private final InsuranceCompanyRepository repository;
 
-    public InsuranceCompanyController(InsuranceCompanyRepository repository) {
-        this.repository = repository;
-    }
+    private final InsuranceCompanyRepository repository;
 
     @PostMapping
     public ResponseEntity<InsuranceCompany> create(@RequestBody @Valid InsuranceCompanyRequest request) {
-        // Evita duplicar seguradora
         InsuranceCompany existing = repository.findByNameIgnoreCase(request.name()).orElse(null);
         if (existing != null) {
             return ResponseEntity.ok(existing);
         }
 
-        InsuranceCompany company = new InsuranceCompany(null, request.name(), request.contact());
+        InsuranceCompany company = new InsuranceCompany(request);
         repository.save(company);
         return ResponseEntity.ok(company);
     }
