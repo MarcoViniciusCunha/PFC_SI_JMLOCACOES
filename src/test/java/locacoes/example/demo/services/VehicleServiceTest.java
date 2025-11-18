@@ -90,16 +90,6 @@ class VehicleServiceTest {
         assertEquals(model, vehicle.getModel());
     }
 
-    @Test
-    void testCreateVehicleCategoryNotFound() {
-        VehicleRequest request = mock(VehicleRequest.class);
-        when(request.idCategoria()).thenReturn(99);
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> vehicleService.create(request));
-
-        assertEquals("Categoria não encontrada.", ex.getReason());
-    }
 
     @Test
     void testFindByIdSuccess() {

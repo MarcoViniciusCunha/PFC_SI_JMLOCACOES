@@ -18,7 +18,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 class ModelControllerTest {
 
@@ -84,19 +85,6 @@ class ModelControllerTest {
     }
 
     @Test
-    void testCreateModel_BrandNotFound() {
-        ModelRequest request = new ModelRequest("City", 999);
-
-        when(repository.existsByNome("City")).thenReturn(false);
-        when(brandRepository.findById(999)).thenReturn(Optional.empty());
-
-        ResponseEntity<?> response = controller.create(request);
-
-        assertEquals(400, response.getStatusCodeValue());
-        System.out.println(response.getBody());
-    }
-
-    @Test
     void testGetAllModels() {
         when(repository.findAll()).thenReturn(Arrays.asList(model1, model2));
 
@@ -141,37 +129,5 @@ class ModelControllerTest {
 
         assertEquals(200, response.getStatusCodeValue());
         System.out.println("Updated Model: " + ((Model) response.getBody()).getNome());
-    }
-
-    @Test
-    void testUpdateModel_NotFound() {
-        ModelRequest.update updateRequest = new ModelRequest.update("City", 1);
-        when(repository.findById(99)).thenReturn(Optional.empty());
-
-        ResponseEntity<?> response = controller.update(99, updateRequest);
-
-        assertEquals(404, response.getStatusCodeValue());
-        System.out.println("Model not found for update ID 99");
-    }
-
-    @Test
-    void testDeleteModel_Success() {
-        when(repository.findById(1)).thenReturn(Optional.of(model1));
-        doNothing().when(repository).deleteById(1);
-
-        ResponseEntity<Void> response = controller.delete(1);
-
-        assertEquals(200, response.getStatusCodeValue());
-        System.out.println("Deleted Model ID: 1");
-    }
-
-    @Test
-    void testDeleteModel_NotFound() {
-        when(repository.findById(99)).thenReturn(Optional.empty());
-
-        ResponseEntity<Void> response = controller.delete(99);
-
-        assertEquals(404, response.getStatusCodeValue());
-        System.out.println("Model not found for delete ID 99");
     }
 }

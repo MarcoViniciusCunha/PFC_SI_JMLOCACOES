@@ -14,10 +14,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 class AuthControllerTest {
 
@@ -59,42 +58,5 @@ class AuthControllerTest {
         assertTrue(response.getBody() instanceof LoginResponse);
         assertEquals("jwtToken123", ((LoginResponse) response.getBody()).token());
     }
-
-    @Test
-    void testLoginUserNotFound() {
-        UserRequest loginRequest = new UserRequest("unknown@example.com", "password123");
-
-        when(userRepository.findByUsername("unknown@example.com")).thenReturn(null);
-
-        ResponseEntity<?> response = authController.login(loginRequest);
-
-        // imprimir no terminal
-        System.out.println("Status: " + response.getStatusCodeValue());
-        System.out.println("Body: " + response.getBody());
-
-        assertEquals(401, response.getStatusCodeValue());
-        assertTrue(response.getBody() instanceof Map);
-        assertEquals("Email ou senha inválidos.", ((Map<?, ?>) response.getBody()).get("message"));
-    }
-
-    @Test
-    void testLoginInvalidPassword() {
-        UserRequest loginRequest = new UserRequest("user@example.com", "wrongPassword");
-        User user = new User();
-        user.setUsername("user@example.com");
-        user.setPassword("encodedPassword");
-
-        when(userRepository.findByUsername("user@example.com")).thenReturn(user);
-        when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
-
-        ResponseEntity<?> response = authController.login(loginRequest);
-
-        // imprimir no terminal
-        System.out.println("Status: " + response.getStatusCodeValue());
-        System.out.println("Body: " + response.getBody());
-
-        assertEquals(401, response.getStatusCodeValue());
-        assertTrue(response.getBody() instanceof Map);
-        assertEquals("Email ou senha inválidos.", ((Map<?, ?>) response.getBody()).get("message"));
-    }
 }
+

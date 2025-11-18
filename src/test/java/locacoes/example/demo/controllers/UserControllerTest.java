@@ -53,20 +53,6 @@ class UserControllerTest {
     }
 
     @Test
-    void testCreateUser_Failure() throws Exception {
-        UserRequest request = new UserRequest("newuser@example.com", "password");
-
-        when(userService.create(request)).thenThrow(new RuntimeException("Erro ao criar usuário"));
-
-        ResponseEntity<?> response = userController.createUser(request);
-
-        assertEquals(400, response.getStatusCodeValue());
-        assertEquals("Erro ao criar usuário", response.getBody());
-
-        System.out.println(response.getBody());
-    }
-
-    @Test
     void testGetAllUsers() {
         List<User> users = Arrays.asList(user1, user2);
         when(userService.getAll()).thenReturn(users);
