@@ -1,6 +1,7 @@
 package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Rental;
+import com.nozama.aluguel_veiculos.dto.RentalDashboardResponse;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
 import com.nozama.aluguel_veiculos.dto.RentalResponse;
 import com.nozama.aluguel_veiculos.services.RentalService;
@@ -58,6 +59,11 @@ public class RentalController {
             @RequestParam(required = false) String status,
             Pageable pageable){
         return ResponseEntity.ok(service.listRentals(cpf, placa, status, pageable));
+    }
+
+    @GetMapping("/dashboard/info")
+    public RentalDashboardResponse getRentalDashboard() {
+        return service.getRentalDashboard();
     }
 
 }

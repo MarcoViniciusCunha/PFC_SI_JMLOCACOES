@@ -29,15 +29,15 @@ public record RentalResponse(
 
     public static RentalResponse fromEntity(Rental rental) {
 
-        List<FineResponse> fines = rental.getFines().stream()
+        List<FineResponse> fineResponses = rental.getFines().stream()
                 .map(FineResponse::fromEntitySummary)
                 .toList();
 
-        List<InspectionResponse> inspections = rental.getInspections().stream()
+        List<InspectionResponse> getInspections = rental.getInspections().stream()
                 .map(InspectionResponse::fromEntitySummary)
                 .toList();
 
-        List<PaymentResponse> payments = rental.getPayments().stream()
+        List<PaymentResponse> paymentResponses  = rental.getPayments().stream()
                 .map(PaymentResponse::fromEntitySummary)
                 .toList();
 
@@ -55,9 +55,9 @@ public record RentalResponse(
                 rental.getPrice(),
                 rental.isReturned(),
                 calcularStatus(rental.isReturned(), rental.getEndDate()),
-                fines,
-                inspections,
-                payments
+                fineResponses,
+                getInspections,
+                paymentResponses
         );
     }
 
@@ -87,5 +87,9 @@ public record RentalResponse(
         if (returned) return "DEVOLVIDA";
         if (endDate.isBefore(LocalDate.now())) return "ATRASADA";
         return "ATIVA";
+    }
+
+    public static String calcularStatus(Rental rental) {
+        return calcularStatus(rental.isReturned(), rental.getEndDate());
     }
 }

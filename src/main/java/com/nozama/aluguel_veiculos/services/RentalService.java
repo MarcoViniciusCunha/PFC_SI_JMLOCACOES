@@ -1,9 +1,11 @@
 package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
+import com.nozama.aluguel_veiculos.domain.Payment;
 import com.nozama.aluguel_veiculos.domain.Rental;
 import com.nozama.aluguel_veiculos.domain.Vehicle;
 import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
+import com.nozama.aluguel_veiculos.dto.RentalDashboardResponse;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
 import com.nozama.aluguel_veiculos.dto.RentalResponse;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
@@ -21,11 +23,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class RentalService {
+public class    RentalService {
 
     private final RentalRepository rentalRepository;
     private final VehicleRepository vehicleRepository;
@@ -99,6 +102,52 @@ public class RentalService {
                 .stream()
                 .map(RentalResponse::fromEntityBasic)
                 .toList();
+    }
+
+    public RentalDashboardResponse getRentalDashboard(){
+        LocalDate hoje = LocalDate.now();
+
+        List<Rental> rentals = rentalRepository.findAll();
+
+        BigDecimal faturamentoMes = rentals.stream()
+                .flatMap(l -> l.getPayments().stream())
+                .filter(p -> p.getData_pagamento() != null)
+                .filter(p -> p.getStatus() != null && p.getStatus().equalsIgnoreCase("PAGO"))
+                .filter(p ->
+                        p.getData_pagamento().getMonth() == hoje.getMonth() &&
+                        p.getData_pagamento().getYear() == hoje.getYear()
+                )
+                .map(Payment::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long reservasAndamento = rentals.stream()
+                .filter(l -> RentalResponse.calcularStatus(l).equals("ATIVA"))
+                .count();
+
+        long pendencias = rentals.stream()
+                .filter(l -> RentalResponse.calcularStatus(l).equals("ATRASADA"))
+                .count();
+
+        RentalResponse proximaDevolucao = rentals.stream()
+                .filter(l -> RentalResponse.calcularStatus(l).equals("ATIVA"))
+                .min(Comparator.comparing(Rental::getEndDate))
+                .map(RentalResponse::fromEntity)
+                .orElse(null);
+
+        RentalResponse proximaLocacao = rentals.stream()
+                .filter(l -> l.getStartDate() != null)
+                .filter(l -> l.getStartDate().isAfter(hoje))
+                .min(Comparator.comparing(Rental::getStartDate))
+                .map(RentalResponse::fromEntity)
+                .orElse(null);
+
+        return new RentalDashboardResponse(
+                faturamentoMes,
+                reservasAndamento,
+                pendencias,
+                proximaDevolucao,
+                proximaLocacao
+        );
     }
 
     public Page<RentalResponse> listRentals(String cpf, String placa, String status, Pageable pageable) {
