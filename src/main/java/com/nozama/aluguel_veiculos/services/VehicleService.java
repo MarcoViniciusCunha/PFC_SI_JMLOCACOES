@@ -77,6 +77,29 @@ public class VehicleService {
         return vehicles.stream().map(VehicleResponse::fromEntity).toList();
     }
 
+    public List<VehicleResponse> findByStatus(String status) {
+        if (status == null || status.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O status é obrigatório.");
+        }
+
+        VehicleStatus statusEnum;
+        try {
+            statusEnum = VehicleStatus.fromString(status);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status inválido: " + status);
+        }
+
+        List<Vehicle> vehicles = vehicleRepository.findByStatus(statusEnum);
+
+        if (vehicles.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhum veículo encontrado com status: " + status);
+        }
+
+        return vehicles.stream()
+                .map(VehicleResponse::fromEntity)
+                .toList();
+    }
+
     @Transactional
     public Vehicle updateVehicle(String placa, VehicleRequest.update request) {
         Vehicle vehicle = findById(placa);

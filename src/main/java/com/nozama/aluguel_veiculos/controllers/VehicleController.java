@@ -54,6 +54,11 @@ public class VehicleController {
         return ResponseEntity.ok(service.searchVehicles(placa, categoria, brand, model, color, ano, status));
     }
 
+    @GetMapping("/status")
+    public ResponseEntity<List<VehicleResponse>> getByStatus(@RequestParam String status){
+        return ResponseEntity.ok(service.findByStatus(status));
+    }
+
     @PatchMapping("/{placa}")
     public ResponseEntity<VehicleResponse> update(@PathVariable String placa, @RequestBody @Valid VehicleRequest.update request){
         return ResponseEntity.ok(VehicleResponse.fromEntity(service.updateVehicle(placa, request)));

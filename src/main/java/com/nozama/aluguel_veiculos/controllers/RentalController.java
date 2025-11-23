@@ -66,4 +66,9 @@ public class RentalController {
         return service.getRentalDashboard();
     }
 
+    @GetMapping("/status")
+    public ResponseEntity<List<RentalResponse>> getRentalStatus(@RequestParam String status){
+        return ResponseEntity.ok(service.findRentalByStatus(status));
+    }
+
 }

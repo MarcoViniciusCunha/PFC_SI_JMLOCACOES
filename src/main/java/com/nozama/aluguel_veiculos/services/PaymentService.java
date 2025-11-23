@@ -2,6 +2,7 @@ package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.Payment;
 import com.nozama.aluguel_veiculos.domain.Rental;
+import com.nozama.aluguel_veiculos.domain.enums.PaymentStatus;
 import com.nozama.aluguel_veiculos.dto.PaymentRequest;
 import com.nozama.aluguel_veiculos.dto.PaymentResponse;
 import com.nozama.aluguel_veiculos.repository.PaymentRepository;
@@ -33,16 +34,16 @@ public class PaymentService {
         BigDecimal valorTotalAtual = calcularValorTotalComJurosETaxa(rental, juros, request.dataPagamento());
 
         BigDecimal valorPago = payments.stream()
-                .filter(p -> "PAGO".equalsIgnoreCase(p.getStatus()))
+                .filter(p -> p.getStatus() == PaymentStatus.PAGO)
                 .map(Payment::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         var pagamentoBase = payments.stream()
-                .filter(p -> "PAGO".equalsIgnoreCase(p.getStatus()))
+                .filter(p -> p.getStatus() == PaymentStatus.PAGO)
                 .findFirst();
 
         var pagamentoPendente = payments.stream()
-                .filter(p -> "PENDENTE".equalsIgnoreCase(p.getStatus()))
+                .filter(p -> p.getStatus() == PaymentStatus.PENDENTE)
                 .findFirst();
 
         if (valorPago.compareTo(valorTotalAtual) >= 0 && pagamentoPendente.isEmpty()) {
@@ -65,7 +66,7 @@ public class PaymentService {
         }
 
         novoPagamento.setValor(valorCalculado);
-        novoPagamento.setStatus(request.status());
+        novoPagamento.setStatus(PaymentStatus.fromString(request.status()));
         novoPagamento.setFormaPagto(request.formaPagto());
         novoPagamento.setParcelas(request.parcelas());
         novoPagamento.setData_pagamento(request.dataPagamento());
@@ -126,7 +127,7 @@ public class PaymentService {
             Rental rental = payment.getRental();
             var payments = paymentRepository.findByRentalId(rental.getId());
             var pagamentoBase = payments.stream()
-                    .filter(p -> "PAGO".equalsIgnoreCase(p.getStatus()))
+                    .filter(p -> p.getStatus() == PaymentStatus.PAGO)
                     .findFirst();
 
             BigDecimal valorCalculado = calcularValorTotalComJurosETaxa(rental, request.juros(), payment.getData_pagamento());
@@ -148,7 +149,7 @@ public class PaymentService {
         }
 
         if (request.status() != null) {
-            payment.setStatus(request.status());
+            payment.setStatus(PaymentStatus.fromString(request.status()));
         }
 
         if (request.parcelas() != null) {

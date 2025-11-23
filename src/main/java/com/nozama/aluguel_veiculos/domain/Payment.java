@@ -1,5 +1,7 @@
 package com.nozama.aluguel_veiculos.domain;
 
+import com.nozama.aluguel_veiculos.domain.enums.PaymentStatus;
+import com.nozama.aluguel_veiculos.domain.enums.PaymentStatusConverter;
 import com.nozama.aluguel_veiculos.dto.PaymentRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -32,7 +34,8 @@ public class Payment {
 
     private String formaPagto;
 
-    private String status;
+    @Convert(converter = PaymentStatusConverter.class)
+    private PaymentStatus status;
 
     private Integer parcelas;
 
@@ -43,7 +46,7 @@ public class Payment {
         this.data_pagamento = request.dataPagamento();
         this.valor = rental.getPrice();
         this.formaPagto = request.formaPagto();
-        this.status = request.status();
+        this.status = PaymentStatus.fromString(request.status());
         this.parcelas = request.parcelas();
         this.descricao = request.descricao();
     }

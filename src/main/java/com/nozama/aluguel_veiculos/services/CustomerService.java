@@ -3,6 +3,7 @@ package com.nozama.aluguel_veiculos.services;
 import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
+import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ public class CustomerService {
 
     private final CustomerRepository repository;
     private final CepService cepService;
+    private final RentalRepository rentalRepository;
 
     public Customer create(CustomerRequest request){
         Customer customer = new Customer(request);
@@ -67,8 +69,14 @@ public class CustomerService {
         }
     }
 
-    public void delete(Long id){
+    public void delete(Long id) {
         Customer existing = findByIdOrThrow(id);
+
+        boolean possuiLocacoes = rentalRepository.existsByCustomerId(id);
+        if (possuiLocacoes) {
+            throw new IllegalStateException("Cliente possui locações e não pode ser excluído");
+        }
+
         repository.delete(existing);
     }
 

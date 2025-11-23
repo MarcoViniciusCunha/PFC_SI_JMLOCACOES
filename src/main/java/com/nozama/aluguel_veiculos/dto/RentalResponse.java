@@ -54,7 +54,7 @@ public record RentalResponse(
                 rental.getReturnDate(),
                 rental.getPrice(),
                 rental.isReturned(),
-                calcularStatus(rental.isReturned(), rental.getEndDate()),
+                rental.getStatus().getDisplayName(),
                 fineResponses,
                 getInspections,
                 paymentResponses
@@ -76,7 +76,7 @@ public record RentalResponse(
                 rental.getReturnDate(),
                 rental.getPrice(),
                 rental.isReturned(),
-                calcularStatus(rental.isReturned(), rental.getEndDate()),
+                rental.getStatus().getDisplayName(),
                 null, // fines
                 null, // inspections
                 null  // payments

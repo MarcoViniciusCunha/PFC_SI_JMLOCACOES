@@ -1,5 +1,6 @@
 package com.nozama.aluguel_veiculos.domain;
 
+import com.nozama.aluguel_veiculos.domain.enums.RentalStatus;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,6 +39,10 @@ public class Rental {
     private BigDecimal price;
     private boolean returned = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RentalStatus status;
+
     @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Fine> fines = new ArrayList<>();
 
@@ -53,5 +58,24 @@ public class Rental {
         this.startDate = request.startDate();
         this.endDate = request.endDate();
         this.price = BigDecimal.ZERO;
+        this.status = RentalStatus.ATIVA;
+    }
+
+    public void updateStatus() {
+        if (returned) {
+        this.status = RentalStatus.DEVOLVIDA;
+    } else if (startDate.isAfter(LocalDate.now())) {
+        this.status = RentalStatus.NAO_INICIADA;
+    } else if (endDate.isBefore(LocalDate.now())) {
+        this.status = RentalStatus.ATRASADA;
+    } else {
+        this.status = RentalStatus.ATIVA;
+    }
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void preSave() {
+        updateStatus();
     }
 }
