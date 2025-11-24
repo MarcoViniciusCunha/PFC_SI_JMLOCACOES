@@ -6,6 +6,8 @@ import com.nozama.aluguel_veiculos.dto.FineRequest;
 import com.nozama.aluguel_veiculos.repository.FineRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -69,4 +71,16 @@ public class FineService {
                         + " na data de " + dataMulta
                 ));
     }
+
+    public Page<Fine> search(
+            String placa,
+            String cpf,
+            LocalDate dataInicial,
+            LocalDate dataFinal,
+            Pageable pageable
+    ) {
+        return repository.search(placa, cpf, dataInicial, dataFinal, pageable);
+    }
+
+
 }
