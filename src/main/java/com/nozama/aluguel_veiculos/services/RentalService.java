@@ -13,6 +13,7 @@ import com.nozama.aluguel_veiculos.dto.RentalResponse;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
+import com.nozama.aluguel_veiculos.utils.HashUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -42,7 +43,7 @@ public class RentalService {
         validateVehicleAvailability(vehicle);
 
         validateDates(request.startDate(), request.endDate());
-        Customer customer = findCustomer(request.cpf());
+        Customer customer = findCustomer(request.customerId());
 
         BigDecimal price = calculatePrice(
                 vehicle.getValorDiario(),
@@ -84,7 +85,7 @@ public class RentalService {
         validateRentalEditable(rental);
 
         if (request.placa() != null) updateVehicle(rental, request.placa());
-        if (request.cpf() != null) rental.setCustomer(findCustomer(request.cpf()));
+        if (request.customerId() != null) rental.setCustomer(findCustomer(request.customerId()));
         if (request.startDate() != null) rental.setStartDate(request.startDate());
         if (request.endDate() != null) rental.setEndDate(request.endDate());
 
@@ -167,7 +168,7 @@ public class RentalService {
         );
     }
 
-    public Page<RentalResponse> listRentals(String cpf, String placa, String status, Pageable pageable) {
+    public Page<RentalResponse> listRentals(Long customerId, String placa, String status, Pageable pageable) {
         RentalStatus statusEnum = null;
 
         if (status != null && !status.isBlank()) {
@@ -178,13 +179,14 @@ public class RentalService {
             }
         }
 
-        Page<Rental> rentals = rentalRepository.findByFilters(cpf, placa, statusEnum, pageable);
+        Page<Rental> rentals = rentalRepository.findByFilters(customerId, placa, statusEnum, pageable);
 
         rentals.forEach(Rental::updateStatus);
         rentalRepository.saveAll(rentals.getContent());
 
         return rentals.map(RentalResponse::fromEntityBasic);
     }
+
 
 
     public List<RentalResponse> findRentalByStatus(String status) {
@@ -202,7 +204,6 @@ public class RentalService {
         if (rentals.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhuma locação encontrada.");
 
-        // Atualiza status e salva no banco
         rentals.forEach(Rental::updateStatus);
         rentalRepository.saveAll(rentals);
 
@@ -227,8 +228,8 @@ public class RentalService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
     }
 
-    private Customer findCustomer(String cpf) {
-        return customerRepository.findByCpf(cpf)
+    private Customer findCustomer(Long id) {
+        return customerRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
     }
 

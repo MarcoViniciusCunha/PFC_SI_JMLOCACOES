@@ -54,11 +54,11 @@ public class RentalController {
 
     @GetMapping("/filter")
     public ResponseEntity<Page<RentalResponse>> filter (
-            @RequestParam(required = false) String cpf,
+            @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) String placa,
             @RequestParam(required = false) String status,
             Pageable pageable){
-        return ResponseEntity.ok(service.listRentals(cpf, placa, status, pageable));
+        return ResponseEntity.ok(service.listRentals(customerId, placa, status, pageable));
     }
 
     @GetMapping("/dashboard/info")

@@ -82,7 +82,7 @@ public class PaymentService {
             LocalDate data,
             String formaPagto,
             String status,
-            String cpf,
+            Long customerId,
             String placa,
             Pageable pageable
     ) {
@@ -92,11 +92,11 @@ public class PaymentService {
 
         switch (normalizedStatus) {
             case "PAGO" ->
-                    payments = paymentRepository.findByFilters(data, formaPagto, "PAGO", cpf, placa, pageable);
+                    payments = paymentRepository.findByFilters(data, formaPagto, "PAGO", customerId, placa, pageable);
             case "PENDENTE" ->
-                    payments = paymentRepository.findByFilters(data, formaPagto, "PENDENTE", cpf, placa, pageable);
+                    payments = paymentRepository.findByFilters(data, formaPagto, "PENDENTE", customerId, placa, pageable);
             default ->
-                    payments = paymentRepository.findByFilters(data, formaPagto, null, cpf, placa, pageable);
+                    payments = paymentRepository.findByFilters(data, formaPagto, null, customerId, placa, pageable);
         }
 
         return payments.map(PaymentResponse::fromEntity);

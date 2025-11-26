@@ -74,12 +74,12 @@ public class FineService {
 
     public Page<Fine> search(
             String placa,
-            String cpf,
+            Long customerId,
             LocalDate dataInicial,
             LocalDate dataFinal,
             Pageable pageable
     ) {
-        return repository.search(placa, cpf, dataInicial, dataFinal, pageable);
+        return repository.search(placa, customerId, dataInicial, dataFinal, pageable);
     }
 
 

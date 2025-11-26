@@ -18,14 +18,14 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     WHERE (:data IS NULL OR p.data_pagamento = :data)
       AND (:formaPagto IS NULL OR p.formaPagto = :formaPagto)
       AND (:status IS NULL OR p.status = :status)
-      AND (:cpfCliente IS NULL OR p.rental.customer.cpf LIKE %:cpfCliente%)
+      AND (:customerId IS NULL OR p.rental.customer.id = :customerId)
       AND (:placaVeiculo IS NULL OR p.rental.vehicle.placa LIKE %:placaVeiculo%)
 """)
     Page<Payment> findByFilters(
             @Param("data") LocalDate data,
             @Param("formaPagto") String formaPagto,
             @Param("status") String status,
-            @Param("cpfCliente") String cpf,
+            @Param("customerId") Long customerId,
             @Param("placaVeiculo") String placa,
             Pageable pageable
     );

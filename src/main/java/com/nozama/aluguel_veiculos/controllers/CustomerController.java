@@ -2,6 +2,7 @@ package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
+import com.nozama.aluguel_veiculos.dto.CustomerResponse;
 import com.nozama.aluguel_veiculos.services.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,28 +18,35 @@ public class CustomerController {
     private final CustomerService service;
 
     @PostMapping
-    public ResponseEntity<Customer> create(@RequestBody CustomerRequest request){
-        return ResponseEntity.ok(service.create(request));
+    public ResponseEntity<CustomerResponse> create(@RequestBody CustomerRequest request){
+        Customer c = service.create(request);
+        return ResponseEntity.ok(CustomerResponse.from(c));
     }
 
     @GetMapping
-    public ResponseEntity<List<Customer>> getAll(){
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<List<CustomerResponse>> getAll(){
+        var list = service.getAll().stream()
+                .map(CustomerResponse::from)
+                .toList();
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Customer>> getByName(@RequestParam String nome){
-        return ResponseEntity.ok(service.getByName(nome));
+    public ResponseEntity<List<CustomerResponse>> getByName(@RequestParam String nome){
+        var list = service.getByName(nome).stream()
+                .map(CustomerResponse::from)
+                .toList();
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Customer> getById(@PathVariable Long id){
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<CustomerResponse> getById(@PathVariable Long id){
+        return ResponseEntity.ok(CustomerResponse.from(service.getById(id)));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Customer> update(@PathVariable Long id, @RequestBody CustomerRequest.update request){
-        return ResponseEntity.ok(service.update(id, request));
+    public ResponseEntity<CustomerResponse> update(@PathVariable Long id, @RequestBody CustomerRequest.update request){
+        return ResponseEntity.ok(CustomerResponse.from(service.update(id, request)));
     }
 
     @DeleteMapping("/{id}")

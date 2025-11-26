@@ -63,7 +63,7 @@ public class FineController {
     @GetMapping("/search")
     public ResponseEntity<Page<FineResponse>> search(
             @RequestParam(required = false) String placa,
-            @RequestParam(required = false) String cpf,
+            @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) LocalDate dataInicial,
             @RequestParam(required = false) LocalDate dataFinal,
             @RequestParam(defaultValue = "0") int page,
@@ -73,7 +73,7 @@ public class FineController {
 
         Page<FineResponse> result = service.search(
                 placa,
-                cpf,
+                customerId,
                 dataInicial,
                 dataFinal,
                 pageable

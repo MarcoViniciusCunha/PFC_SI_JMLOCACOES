@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
+import com.nozama.aluguel_veiculos.utils.HashUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,12 @@ public class CustomerService {
     private final RentalRepository rentalRepository;
 
     public Customer create(CustomerRequest request){
+
+        String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
+        repository.findByCpfHash(cpfHash).ifPresent(c -> {
+            throw new DataIntegrityViolationException("CPF já cadastrado");
+        });
+
         Customer customer = new Customer(request);
         fillAddress(customer, request.cep());
         try {
@@ -48,6 +55,13 @@ public class CustomerService {
     }
 
     public Customer update(Long id, CustomerRequest.update request){
+        String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
+        repository.findByCpfHash(cpfHash).ifPresent(c -> {
+            if (!c.getId().equals(id)) {
+                throw new DataIntegrityViolationException("CPF já cadastrado");
+            }
+        });
+
         Customer existing = findByIdOrThrow(id);
 
         if(request.cnh() != null) existing.setCnh(request.cnh());

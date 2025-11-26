@@ -3,6 +3,7 @@ package locacoes.example.demo.controllers;
 import com.nozama.aluguel_veiculos.controllers.CustomerController;
 import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
+import com.nozama.aluguel_veiculos.dto.CustomerResponse;
 import com.nozama.aluguel_veiculos.services.CustomerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,8 +71,8 @@ class CustomerControllerTest {
 
         when(customerService.getByName("Murillo")).thenReturn(List.of(expected));
 
-        ResponseEntity<List<Customer>> response = customerController.getByName("Murillo");
-        List<Customer> actualList = response.getBody();
+        ResponseEntity<List<CustomerResponse>> response = customerController.getByName("Murillo");
+        List<CustomerResponse> actualList = response.getBody();
 
         System.out.println("testGetByName -> Response: " + actualList);
 

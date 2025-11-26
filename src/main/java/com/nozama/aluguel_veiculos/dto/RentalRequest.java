@@ -8,8 +8,8 @@ import java.time.LocalDate;
 public record RentalRequest(
         @NotBlank(message = "Informe a placa do veículo.")
         String placa,
-        @NotNull(message = "Insira o cpf do cliente")
-        String cpf,
+        @NotNull(message = "Informe o ID do cliente.")
+        Long customerId,
         @NotNull(message = "Insira a data inicial")
         LocalDate startDate,
         @NotNull(message = "Insira a data final")
@@ -17,7 +17,7 @@ public record RentalRequest(
 ) {
     public record update(
             String placa,
-            String cpf,
+            Long customerId,
             LocalDate startDate,
             LocalDate endDate
     ) {

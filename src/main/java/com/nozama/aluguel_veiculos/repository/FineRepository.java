@@ -12,13 +12,13 @@ public interface FineRepository extends JpaRepository<Fine, Long> {
     @Query("""
     SELECT f FROM Fine f
     WHERE (:placa IS NULL OR f.rental.vehicle.placa LIKE %:placa%)
-      AND (:cpf IS NULL OR f.rental.customer.cpf LIKE %:cpf%)
+      AND (:customerId IS NULL OR f.rental.customer.id = :customerId)
       AND (:dataInicial IS NULL OR f.data_multa >= :dataInicial)
       AND (:dataFinal IS NULL OR f.data_multa <= :dataFinal)
 """)
     Page<Fine> search(
             String placa,
-            String cpf,
+            Long customerId,
             LocalDate dataInicial,
             LocalDate dataFinal,
             Pageable pageable

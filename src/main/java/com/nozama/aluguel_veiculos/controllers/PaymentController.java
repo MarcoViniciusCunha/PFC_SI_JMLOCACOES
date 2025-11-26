@@ -52,12 +52,12 @@ public class PaymentController {
             @RequestParam(required = false) LocalDate data,
             @RequestParam(required = false) String formaPagto,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String cpf,
+            @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) String placa,
             Pageable pageable
     ) {
         return ResponseEntity.ok(
-                service.filterPayments(data, formaPagto, status, cpf, placa, pageable)
+                service.filterPayments(data, formaPagto, status, customerId, placa, pageable)
         );
     }
 

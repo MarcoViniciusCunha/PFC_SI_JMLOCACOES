@@ -18,12 +18,12 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
 
     @Query("""
     SELECT r FROM Rental r
-    WHERE (:cpf IS NULL OR r.customer.cpf = :cpf)
+    WHERE (:customerId IS NULL OR r.customer.id = :customerId)
     AND (:placa IS NULL OR r.vehicle.placa = :placa)
     AND (:status IS NULL OR r.status = :status)
 """)
     Page<Rental> findByFilters(
-            @Param("cpf") String cpf,
+            @Param("customerId") Long customerId,
             @Param("placa") String placa,
             @Param("status") RentalStatus status,
             Pageable pageable

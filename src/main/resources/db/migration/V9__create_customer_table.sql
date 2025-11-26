@@ -1,20 +1,26 @@
 CREATE TABLE customer (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    cnh VARCHAR(20) UNIQUE NOT NULL,
+    cnh TEXT,
+    cnh_hash VARCHAR(255),
     nome VARCHAR(255) NOT NULL,
-    cpf VARCHAR(14) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    cpf TEXT,
+    cpf_hash VARCHAR(255),
+    email VARCHAR(255) NOT NULL,
     telefone VARCHAR(20),
     cep VARCHAR(8) NOT NULL,
     numero VARCHAR(10) NOT NULL,
     rua VARCHAR(255),
     cidade VARCHAR(255),
     estado VARCHAR(255),
-    data_nasc DATE
+    data_nasc DATE,
+
+    CONSTRAINT uk_customer_cpf_hash UNIQUE (cpf_hash),
+    CONSTRAINT uk_customer_cnh_hash UNIQUE (cnh_hash),
+    CONSTRAINT uk_customer_email UNIQUE (email)
 );
 
 SET NAMES 'utf8mb4';
-INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('01338908386','Vinicius Santos Nascimento','332.181.960-00','vinicius.santos.nascimento3612@exemplo.com.br','(81)95557-1106','26542351','380','Alameda Santos','Rio de Janeiro','RJ','1988-02-07');
+
 INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('93103413164','Vitor Moreira Souza','781.618.495-60','vitor.moreira.souza7429@exemplo.com.br','(62)96977-3664','55341928','2987','Travessa do Mercado','Belo Horizonte','MG','1997-05-14');
 INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('13953767242','André Nascimento','835.030.564-91','andré.nascimento4041@exemplo.com.br','(98)99830-5304','96965328','2022','Avenida Brasil','Florianópolis','SC','1960-02-14');
 INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('80184514627','Beatriz Oliveira','691.669.784-91','beatriz.oliveira54@exemplo.com.br','(98)95315-9201','28148932','1532','Rua do Sol','Belo Horizonte','MG','2004-04-14');
@@ -114,3 +120,4 @@ INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade,
 INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('91725135521','Rafael Pereira','969.029.593-40','rafael.pereira5501@exemplo.com.br','(81)91186-5345','33154100','1581','Rua do Comércio','Manaus','AM','1993-07-18');
 INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('71040541152','Carlos Ramos','658.617.932-71','carlos.ramos6152@exemplo.com.br','(31)92228-9962','15997062','2488','Vila Nova','Salvador','BA','1969-12-27');
 INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('69872050614','Ana Santos Rodrigues','688.444.310-33','ana.santos.rodrigues9834@exemplo.com.br','(81)94271-2589','03241714','1629','Rua do Comércio','Fortaleza','CE','1979-09-02');
+
