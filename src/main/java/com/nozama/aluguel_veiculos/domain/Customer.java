@@ -54,7 +54,6 @@ public class Customer {
 
     private LocalDate data_nasc;
 
-    // ---------- CONSTRUTOR USADO NO CREATE ----------
     public Customer(CustomerRequest request) {
         this.cnh = request.cnh();
         this.nome = request.nome();

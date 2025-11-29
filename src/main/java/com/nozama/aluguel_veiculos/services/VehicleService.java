@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -27,6 +28,7 @@ public class VehicleService {
     private final BrandRepository brandRepository;
     private final ColorRepository colorRepository;
     private final ModelRepository modelRepository;
+    private final RentalRepository rentalRepository;
 
     public Vehicle create(VehicleRequest request){
         Category category = findCategory(request.idCategoria());
@@ -39,12 +41,16 @@ public class VehicleService {
     }
 
     public List<Vehicle> findAll(){
-        return vehicleRepository.findAll();
+        List<Vehicle> vehicles = vehicleRepository.findAll();
+        vehicles.forEach(this::atualizarStatusDoVeiculo);
+        return vehicles;
     }
 
     public Vehicle findById(String placa){
-        return vehicleRepository.findById(placa)
+        Vehicle vehicle = vehicleRepository.findById(placa)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
+        atualizarStatusDoVeiculo(vehicle);
+        return vehicle;
     }
 
     public List<VehicleResponse> searchVehicles(
@@ -104,7 +110,22 @@ public class VehicleService {
     public Vehicle updateVehicle(String placa, VehicleRequest.update request) {
         Vehicle vehicle = findById(placa);
 
-        if (request.status() != null) vehicle.setStatus(VehicleStatus.valueOf(request.status().toUpperCase()));
+        if (request.status() != null) {
+            VehicleStatus novoStatus = VehicleStatus.valueOf(request.status().toUpperCase());
+
+            if (novoStatus == VehicleStatus.MANUTENCAO) {
+                LocalDate hoje = LocalDate.now();
+                boolean alugado = rentalRepository.existsActiveConflict(vehicle, hoje, hoje);
+
+                if (alugado) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Não é possível enviar um veículo alugado para manutenção.");
+                }
+            }
+
+            vehicle.setStatus(novoStatus);
+        }
+
         if (request.descricao() != null) vehicle.setDescricao(request.descricao());
         if (request.ano() != null) vehicle.setAno(request.ano());
         if (request.idCategoria() != null) vehicle.setCategory(findCategory(request.idCategoria()));
@@ -136,6 +157,18 @@ public class VehicleService {
         if (id == null) return null;
         return repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro não encontrado."));
     }
+
+    @Transactional
+    public void atualizarStatusDoVeiculo(Vehicle vehicle) {
+        LocalDate hoje = LocalDate.now();
+        boolean alugado = rentalRepository.existsActiveConflict(vehicle, hoje, hoje);
+
+        if (vehicle.getStatus() != VehicleStatus.MANUTENCAO) {
+            vehicle.setStatus(alugado ? VehicleStatus.ALUGADO : VehicleStatus.DISPONIVEL);
+            vehicleRepository.save(vehicle);
+        }
+    }
+
 
     private Category findCategory(Integer id) { return findOptional(categoryRepository, id); }
     private Brand findBrand(Integer id) { return findOptional(brandRepository, id); }

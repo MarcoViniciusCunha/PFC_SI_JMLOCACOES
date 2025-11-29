@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -30,7 +31,10 @@ public class CustomerService {
         });
 
         Customer customer = new Customer(request);
-        fillAddress(customer, request.cep());
+        if (request.rua() == null || request.rua().isBlank()) {
+            fillAddress(customer, request.cep());
+        }
+
         try {
             return repository.save(customer);
         } catch (DataIntegrityViolationException e){
@@ -55,18 +59,24 @@ public class CustomerService {
     }
 
     public Customer update(Long id, CustomerRequest.update request){
-        String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
-        repository.findByCpfHash(cpfHash).ifPresent(c -> {
-            if (!c.getId().equals(id)) {
-                throw new DataIntegrityViolationException("CPF já cadastrado");
-            }
-        });
+        if (request.cpf() != null) {
+            String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
+
+            repository.findByCpfHash(cpfHash).ifPresent(c -> {
+                if (!c.getId().equals(id)) {
+                    throw new DataIntegrityViolationException("CPF já cadastrado");
+                }
+            });
+        }
 
         Customer existing = findByIdOrThrow(id);
 
         if(request.cnh() != null) existing.setCnh(request.cnh());
         if(request.nome() != null) existing.setNome(request.nome());
-        if(request.cpf() != null) existing.setCpf(request.cpf());
+        if (request.cpf() != null) {
+            existing.setCpf(request.cpf());
+            existing.setCpfHash(HashUtils.hmacSha256Base64(request.cpf()));
+        }
         if(request.email() != null) existing.setEmail(request.email());
         if(request.telefone() != null) existing.setTelefone(request.telefone());
         if(request.numero() != null) existing.setNumero(request.numero());
@@ -102,14 +112,16 @@ public class CustomerService {
     private void fillAddress(Customer customer, String cep){
         if(cep != null && !cep.isEmpty()){
             try {
-                Map<String, String> endereco = cepService.buscarEndereco(cep);
+                Map<String, Object> endereco = cepService.buscarEndereco(cep);
                 if(endereco.containsKey("erro")){
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP inválido");
                 }
-                customer.setRua(endereco.get("logradouro"));
-                customer.setCidade(endereco.get("localidade"));
-                customer.setEstado(endereco.get("uf"));
-            } catch(Exception e){
+                customer.setRua((String) endereco.get("logradouro"));
+                customer.setCidade((String) endereco.get("localidade"));
+                customer.setEstado((String) endereco.get("uf"));
+            } catch (RestClientException e) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Serviço de CEP indisponível");
+            } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao buscar endereço");
             }
         }

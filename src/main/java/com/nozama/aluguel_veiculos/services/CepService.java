@@ -9,14 +9,11 @@ import java.util.Map;
 @Service
 public class CepService {
 
-    private final String viaCepUrl;
+    @Value("${viacep.url}")
+    private String viaCepUrl;
 
-    public CepService(@Value("${viacep.url}") String viaCepUrl){
-        this.viaCepUrl = viaCepUrl;
-    }
-
-    public Map<String, String> buscarEndereco(String cep){
+    public Map<String, Object> buscarEndereco(String cep) {
         RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(viaCepUrl, Map.class, cep);
+        return restTemplate.getForObject(viaCepUrl.replace("{cep}", cep), Map.class);
     }
 }

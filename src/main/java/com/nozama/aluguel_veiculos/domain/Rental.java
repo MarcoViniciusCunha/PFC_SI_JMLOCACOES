@@ -1,6 +1,7 @@
 package com.nozama.aluguel_veiculos.domain;
 
 import com.nozama.aluguel_veiculos.domain.enums.RentalStatus;
+import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -58,20 +59,31 @@ public class Rental {
         this.startDate = request.startDate();
         this.endDate = request.endDate();
         this.price = BigDecimal.ZERO;
-        this.status = RentalStatus.ATIVA;
+        updateStatus();
     }
 
     public void updateStatus() {
-        if (returned) {
-        this.status = RentalStatus.DEVOLVIDA;
-    } else if (startDate.isAfter(LocalDate.now())) {
-        this.status = RentalStatus.NAO_INICIADA;
-    } else if (endDate.isBefore(LocalDate.now())) {
-        this.status = RentalStatus.ATRASADA;
-    } else {
+        LocalDate hoje = LocalDate.now();
+
+        if (returned || returnDate != null) {
+            this.status = RentalStatus.DEVOLVIDA;
+            return;
+        }
+
+        if (startDate.isAfter(hoje)) {
+            this.status = RentalStatus.NAO_INICIADA;
+            return;
+        }
+
+        if (endDate.isBefore(hoje)) {
+            this.status = RentalStatus.ATRASADA;
+            return;
+        }
+
         this.status = RentalStatus.ATIVA;
     }
-    }
+
+
 
     @PrePersist
     @PreUpdate

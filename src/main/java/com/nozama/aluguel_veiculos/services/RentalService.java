@@ -13,9 +13,9 @@ import com.nozama.aluguel_veiculos.dto.RentalResponse;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
-import com.nozama.aluguel_veiculos.utils.HashUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -36,29 +36,39 @@ public class RentalService {
     private final RentalRepository rentalRepository;
     private final VehicleRepository vehicleRepository;
     private final CustomerRepository customerRepository;
+    private final VehicleService vehicleService;
 
     @Transactional
     public Rental create(RentalRequest request) {
-        Vehicle vehicle = findVehicle(request.placa());
-        validateVehicleAvailability(vehicle);
-
         validateDates(request.startDate(), request.endDate());
+
+        Vehicle vehicle = findVehicle(request.placa());
         Customer customer = findCustomer(request.customerId());
 
-        BigDecimal price = calculatePrice(
-                vehicle.getValorDiario(),
+        boolean conflito = rentalRepository.existsActiveConflict(
+                vehicle,
                 request.startDate(),
                 request.endDate()
         );
 
-        vehicle.setStatus(VehicleStatus.ALUGADO);
+        if (conflito) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O veículo já possui uma locação nesse período.");
+        }
+
+        validateVehicleAvailability(vehicle);
 
         Rental rental = new Rental(vehicle, customer, request);
-        rental.setPrice(price);
-        rental.setStatus(RentalStatus.ATIVA);
+        rental.setPrice(calculatePrice(
+                vehicle.getValorDiario(),
+                request.startDate(),
+                request.endDate()
+        ));
 
-        vehicleRepository.save(vehicle);
-        return rentalRepository.save(rental);
+        rentalRepository.save(rental);
+        vehicleService.atualizarStatusDoVeiculo(vehicle);
+
+        return rental;
     }
 
     @Transactional
@@ -73,7 +83,7 @@ public class RentalService {
         rental.setStatus(RentalStatus.DEVOLVIDA);
 
         Vehicle vehicle = rental.getVehicle();
-        vehicle.setStatus(VehicleStatus.DISPONIVEL);
+        vehicleService.atualizarStatusDoVeiculo(vehicle);
 
         vehicleRepository.save(vehicle);
         return rentalRepository.save(rental);
@@ -89,14 +99,24 @@ public class RentalService {
         if (request.startDate() != null) rental.setStartDate(request.startDate());
         if (request.endDate() != null) rental.setEndDate(request.endDate());
 
-        if (rental.getStartDate() != null && rental.getEndDate() != null) {
-            validateDates(rental.getStartDate(), rental.getEndDate());
-            rental.setPrice(calculatePrice(
-                    rental.getVehicle().getValorDiario(),
-                    rental.getStartDate(),
-                    rental.getEndDate()
-            ));
+        validateDates(rental.getStartDate(), rental.getEndDate());
+
+        boolean conflito = rentalRepository.existsConflictExcludingSelf(
+                rental.getVehicle(),
+                rental.getId(),
+                rental.getStartDate(),
+                rental.getEndDate()
+        );
+
+        if (conflito) {
+            throwBadRequest("O veículo já possui uma locação nesse período.");
         }
+
+        rental.setPrice(calculatePrice(
+                rental.getVehicle().getValorDiario(),
+                rental.getStartDate(),
+                rental.getEndDate()
+        ));
 
         rental.updateStatus();
         return rentalRepository.save(rental);
@@ -105,7 +125,7 @@ public class RentalService {
     public void deleteById(Long id) {
         Rental rental = findRentalById(id);
 
-        if (!rental.getStartDate().isAfter(LocalDate.now()))
+        if (!rental.getStartDate().isAfter(LocalDate.now().minusDays(1)))
             throwBadRequest("Não é possível deletar uma locação já iniciada.");
 
         if (!rental.isReturned())
@@ -220,6 +240,8 @@ public class RentalService {
         rental.updateStatus();
         rentalRepository.save(rental);
 
+        vehicleService.atualizarStatusDoVeiculo(rental.getVehicle());
+
         return rental;
     }
 
@@ -234,8 +256,17 @@ public class RentalService {
     }
 
     private void validateVehicleAvailability(Vehicle vehicle) {
-        if (vehicle.getStatus() != VehicleStatus.DISPONIVEL)
-            throwBadRequest("Veículo não disponível.");
+        if (vehicle.getStatus() == VehicleStatus.MANUTENCAO) {
+            throwBadRequest("Veículo está em manutenção e não pode ser alugado.");
+        }
+
+        if (vehicle.getStatus() == VehicleStatus.ALUGADO) {
+            throwBadRequest("Veículo já está alugado e não pode ser reservado.");
+        }
+
+        if (vehicle.getStatus() != VehicleStatus.DISPONIVEL) {
+            throwBadRequest("Veículo não está disponível para locação.");
+        }
     }
 
     private void validateDates(LocalDate start, LocalDate end) {
@@ -247,7 +278,7 @@ public class RentalService {
         if (rental.isReturned())
             throwBadRequest("Não é possível editar uma locação já devolvida.");
 
-        if (!rental.getStartDate().isAfter(LocalDate.now().minusDays(1)))
+        if (!rental.getStartDate().isAfter(LocalDate.now()))
             throwBadRequest("Locação já iniciada, não pode editar.");
     }
 
@@ -258,12 +289,11 @@ public class RentalService {
         validateVehicleAvailability(newVehicle);
 
         oldVehicle.setStatus(VehicleStatus.DISPONIVEL);
-        newVehicle.setStatus(VehicleStatus.ALUGADO);
 
         vehicleRepository.save(oldVehicle);
-        vehicleRepository.save(newVehicle);
-
         rental.setVehicle(newVehicle);
+        vehicleService.atualizarStatusDoVeiculo(newVehicle);
+
     }
 
     private BigDecimal calculatePrice(BigDecimal valorDiario, LocalDate start, LocalDate end) {
