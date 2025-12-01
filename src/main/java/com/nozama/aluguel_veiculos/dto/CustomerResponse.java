@@ -47,7 +47,7 @@ public record CustomerResponse(
     }
 
 
-    private static String maskCnh(String cnh){
+    public static String maskCnh(String cnh){
         if(cnh == null || cnh.length() < 4) return null;
         String last4 = cnh.substring(cnh.length()-4);
         return "******" + last4;

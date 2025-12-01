@@ -48,7 +48,7 @@ public record RentalResponse(
                 rental.getVehicle().getModel().getBrand().getNome(),
                 rental.getVehicle().getAno(),
                 rental.getCustomer().getNome(),
-                rental.getCustomer().getCnh(),
+                CustomerResponse.maskCnh(rental.getCustomer().getCnh()),
                 rental.getStartDate(),
                 rental.getEndDate(),
                 rental.getReturnDate(),
@@ -61,7 +61,6 @@ public record RentalResponse(
         );
     }
 
-    // Versão básica (sem listas)
     public static RentalResponse fromEntityBasic(Rental rental) {
         return new RentalResponse(
                 rental.getId(),
