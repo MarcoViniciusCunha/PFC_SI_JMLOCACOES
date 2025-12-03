@@ -18,8 +18,10 @@ public class CepController {
     public ResponseEntity<?> buscar(@PathVariable String cep) {
         Map<String, Object> endereco = cepService.buscarEndereco(cep);
 
-        if (endereco.containsKey("erro")) {
-            return ResponseEntity.badRequest().body(Map.of("erro", "CEP inválido"));
+        if (Boolean.TRUE.equals(endereco.get("erro"))) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("erro", endereco.get("mensagem"))
+            );
         }
 
         return ResponseEntity.ok(endereco);

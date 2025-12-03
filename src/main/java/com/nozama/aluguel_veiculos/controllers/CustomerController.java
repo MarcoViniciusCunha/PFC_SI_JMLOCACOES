@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.dto.CustomerResponse;
 import com.nozama.aluguel_veiculos.services.CustomerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ public class CustomerController {
     private final CustomerService service;
 
     @PostMapping
-    public ResponseEntity<CustomerResponse> create(@RequestBody CustomerRequest request){
+    public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request){
         Customer c = service.create(request);
         return ResponseEntity.ok(CustomerResponse.from(c));
     }
@@ -45,7 +46,7 @@ public class CustomerController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<CustomerResponse> update(@PathVariable Long id, @RequestBody CustomerRequest.update request){
+    public ResponseEntity<CustomerResponse> update(@PathVariable Long id,@RequestBody CustomerRequest.update request){
         return ResponseEntity.ok(CustomerResponse.from(service.update(id, request)));
     }
 

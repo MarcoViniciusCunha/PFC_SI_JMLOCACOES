@@ -55,10 +55,13 @@ public class Customer {
     private LocalDate data_nasc;
 
     public Customer(CustomerRequest request) {
-        this.cnh = request.cnh();
+        String cleanCpf = cleanNumber(request.cpf());
+        String cleanCnh = cleanNumber(request.cnh());
+
         this.nome = request.nome();
-        this.cpf = request.cpf();
-        this.email = request.email();
+        this.cnh = cleanCnh;
+        this.cpf = cleanCpf;
+        this.email = request.email().toLowerCase();
         this.telefone = request.telefone();
         this.cep = request.cep();
         this.numero = request.numero();
@@ -72,12 +75,19 @@ public class Customer {
     }
 
     public void setCpf(String cpf) {
-        this.cpf = cpf;
-        this.cpfHash = cpf != null ? HashUtils.hmacSha256Base64(cpf) : null;
+        String cleanCpf = cleanNumber(cpf);
+        this.cpf = cleanCpf;
+        this.cpfHash = cleanCpf != null ? HashUtils.hmacSha256Base64(cleanCpf) : null;
     }
 
     public void setCnh(String cnh) {
-        this.cnh = cnh;
-        this.cnhHash = cnh != null ? HashUtils.hmacSha256Base64(cnh) : null;
+        String cleanCnh = cleanNumber(cnh);
+        this.cnh = cleanCnh;
+        this.cnhHash = cleanCnh != null ? HashUtils.hmacSha256Base64(cleanCnh) : null;
+    }
+
+    private String cleanNumber(String value) {
+        if (value == null) return null;
+        return value.replaceAll("\\D", "");
     }
 }

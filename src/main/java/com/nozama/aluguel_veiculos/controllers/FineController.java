@@ -77,7 +77,7 @@ public class FineController {
                 dataInicial,
                 dataFinal,
                 pageable
-        ).map(FineResponse::fromEntitySummary);
+        ).map(FineResponse::fromEntity);
 
         return ResponseEntity.ok(result);
     }

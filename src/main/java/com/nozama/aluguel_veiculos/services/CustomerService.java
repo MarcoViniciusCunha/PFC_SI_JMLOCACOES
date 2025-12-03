@@ -59,38 +59,88 @@ public class CustomerService {
     }
 
     public Customer update(Long id, CustomerRequest.update request){
-        if (request.cpf() != null) {
-            String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
+        Customer existing = findByIdOrThrow(id);
 
+        if (request.cpf() != null) {
+            if (request.cpf().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF não pode ser vazio");
+            }
+            String cleanCpf = request.cpf().replaceAll("\\D", "");
+            if (!cleanCpf.matches("\\d{11}")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF deve ter 11 dígitos");
+            }
+            String cpfHash = HashUtils.hmacSha256Base64(cleanCpf);
             repository.findByCpfHash(cpfHash).ifPresent(c -> {
                 if (!c.getId().equals(id)) {
                     throw new DataIntegrityViolationException("CPF já cadastrado");
                 }
             });
+            existing.setCpf(cleanCpf);
         }
 
-        Customer existing = findByIdOrThrow(id);
-
-        if(request.cnh() != null) existing.setCnh(request.cnh());
-        if(request.nome() != null) existing.setNome(request.nome());
-        if (request.cpf() != null) {
-            existing.setCpf(request.cpf());
-            existing.setCpfHash(HashUtils.hmacSha256Base64(request.cpf()));
+        if (request.cnh() != null) {
+            if (request.cnh().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH não pode ser vazia");
+            }
+            String cleanCnh = request.cnh().replaceAll("\\D", "");
+            if (!cleanCnh.matches("\\d{11}")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH deve ter 11 dígitos");
+            }
+            existing.setCnh(cleanCnh);
+        } else if (existing.getCnh() == null || existing.getCnh().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH não pode ser nula");
         }
-        if(request.email() != null) existing.setEmail(request.email());
-        if(request.telefone() != null) existing.setTelefone(request.telefone());
-        if(request.numero() != null) existing.setNumero(request.numero());
-        if(request.data_nasc() != null) existing.setData_nasc(request.data_nasc());
-        if(request.cep() != null){
+
+
+        if (request.nome() != null) {
+            if (request.nome().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome não pode ser vazio");
+            }
+            existing.setNome(request.nome());
+        }
+
+        if (request.email() != null) {
+            if (request.email().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email não pode ser vazio");
+            }
+            String emailLower = request.email().toLowerCase();
+            repository.findByEmail(emailLower).ifPresent(c -> {
+                if (!c.getId().equals(id)) {
+                    throw new DataIntegrityViolationException("Email já cadastrado");
+                }
+            });
+            existing.setEmail(emailLower);
+        }
+
+        if (request.telefone() != null) {
+            String cleanTel = request.telefone().replaceAll("\\D", "");
+            if (!cleanTel.matches("\\d{10,11}")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
+            }
+            existing.setTelefone(cleanTel);
+        }
+
+        if (request.cep() != null) {
+            if (request.cep().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP não pode ser vazio");
+            }
+
             existing.setCep(request.cep());
             fillAddress(existing, request.cep());
         }
 
-        try {
-            return repository.save(existing);
-        } catch (DataIntegrityViolationException e){
-            throw new RuntimeException("CNH, CPF ou email já cadastrado!");
+        if (request.numero() != null) {
+            if (request.numero().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Número não pode ser vazio");
+            }
+            existing.setNumero(request.numero());
         }
+
+        if (request.data_nasc() != null) {
+            existing.setData_nasc(request.data_nasc());
+        }
+
+        return repository.save(existing);
     }
 
     public void delete(Long id) {

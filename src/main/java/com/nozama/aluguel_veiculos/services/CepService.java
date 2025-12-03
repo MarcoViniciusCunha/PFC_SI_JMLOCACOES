@@ -13,7 +13,15 @@ public class CepService {
     private String viaCepUrl;
 
     public Map<String, Object> buscarEndereco(String cep) {
-        RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(viaCepUrl.replace("{cep}", cep), Map.class);
+        if (cep == null || !cep.matches("\\d{8}")) {
+            return Map.of("erro", true, "mensagem", "CEP inválido");
+        }
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            return restTemplate.getForObject(viaCepUrl.replace("{cep}", cep), Map.class);
+        } catch (Exception e) {
+            return Map.of("erro", true, "mensagem", "Erro ao consultar ViaCEP");
+        }
     }
 }
