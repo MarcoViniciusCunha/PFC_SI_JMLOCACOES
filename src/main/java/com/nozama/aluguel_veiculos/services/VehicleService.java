@@ -3,127 +3,137 @@ package com.nozama.aluguel_veiculos.services;
 import com.nozama.aluguel_veiculos.domain.*;
 import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.VehicleFilter;
-import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
+import com.nozama.aluguel_veiculos.dto.VehicleResponse;
 import com.nozama.aluguel_veiculos.repository.*;
 import com.nozama.aluguel_veiculos.specification.VehicleSpecification;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final CategoryRepository categoryRepository;
     private final InsuranceRepository insuranceRepository;
-    private final BrandRepository markRepository;
+    private final BrandRepository brandRepository;
     private final ColorRepository colorRepository;
     private final ModelRepository modelRepository;
-
-    public VehicleService(VehicleRepository vehicleRepository, CategoryRepository categoryRepository, InsuranceRepository insuranceRepository, BrandRepository markRepository, ColorRepository colorRepository, ModelRepository modelRepository) {
-        this.vehicleRepository = vehicleRepository;
-        this.categoryRepository = categoryRepository;
-        this.insuranceRepository = insuranceRepository;
-        this.markRepository = markRepository;
-        this.colorRepository = colorRepository;
-        this.modelRepository = modelRepository;
-    }
+    private final RentalRepository rentalRepository;
 
     public Vehicle create(VehicleRequest request){
-        Category category = categoryRepository.findById(request.idCategoria())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada."));
+        Category category = findCategory(request.idCategoria());
+        Insurance insurance = findOptional(insuranceRepository, request.idSeguro());
+        Brand brand = findOptional(brandRepository, request.idMarca());
+        Color color = findOptional(colorRepository, request.idCor());
+        Model model = findOptional(modelRepository, request.idModelo());
 
-        Insurance insurance = null;
-        if (request.idSeguro() != null){
-            insurance = insuranceRepository.findById(request.idSeguro())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seguro não encontrado"));
-        }
-
-        Brand mark = null;
-        if (request.idMarca() != null){
-            mark = markRepository.findById(request.idMarca())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrado"));
-        }
-
-        Color color = null;
-        if (request.idCor() != null){
-            color = colorRepository.findById(request.idCor())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cor não encontrado"));
-        }
-
-        Model model = null;
-        if (request.idModelo() != null){
-            model = modelRepository.findById(request.idModelo())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado"));
-        }
-
-        Vehicle vehicle = new Vehicle(request, category, insurance, mark, color, model);
-        return vehicleRepository.save(vehicle);
+        return vehicleRepository.save(new Vehicle(request, category, insurance, brand, color, model));
     }
 
     public List<Vehicle> findAll(){
-        return vehicleRepository.findAll();
-    }
-
-    public Vehicle findById(String placa){
-        return vehicleRepository.findById(placa)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
-    }
-
-    public List<Vehicle> searchVehicles(VehicleFilter filter) {
-        Specification<Vehicle> spec = VehicleSpecification.filter(filter);
-        List<Vehicle> vehicles = vehicleRepository.findAll(spec);
-
-        if (vehicles.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículos não encontrados.");
-        }
+        List<Vehicle> vehicles = vehicleRepository.findAll();
+        vehicles.forEach(this::atualizarStatusDoVeiculo);
         return vehicles;
     }
 
-    @Transactional
-    public Vehicle updateVehicle(String placa, VehiclePatchRequest request) {
+    public Vehicle findById(String placa){
         Vehicle vehicle = vehicleRepository.findById(placa)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículo não encontrado."));
+        atualizarStatusDoVeiculo(vehicle);
+        return vehicle;
+    }
 
-        if (request.status() != null){
-            vehicle.setStatus(VehicleStatus.valueOf(request.status().toUpperCase()));
+    public List<VehicleResponse> searchVehicles(
+            String placa, String categoria, String brand, String model,
+            String color, Integer ano, String status) {
+
+        VehicleFilter filter = new VehicleFilter();
+        filter.setPlaca(placa);
+        filter.setIdCategoria(parseInteger(categoria));
+        filter.setIdMarca(parseInteger(brand));
+        filter.setIdModelo(parseInteger(model));
+        filter.setIdCor(parseInteger(color));
+        filter.setAno(ano);
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                filter.setStatus(VehicleStatus.fromString(status));
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status inválido: " + status);
+            }
         }
-        if (request.descricao() != null){
-            vehicle.setDescricao(request.descricao());
+
+        Specification<Vehicle> spec = VehicleSpecification.filter(filter);
+        List<Vehicle> vehicles = vehicleRepository.findAll(spec);
+
+        if (vehicles.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Veículos não encontrados.");
         }
-        if (request.idCategoria() != null){
-            Category category = categoryRepository.findById(request.idCategoria())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada."));
-            vehicle.setCategory(category);
+
+        return vehicles.stream().map(VehicleResponse::fromEntity).toList();
+    }
+
+    public List<VehicleResponse> findByStatus(String status) {
+        if (status == null || status.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O status é obrigatório.");
         }
-        if (request.idMarca() != null){
-            Brand mark = markRepository.findById(request.idMarca())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Marca não encontrada."));
-            vehicle.setBrand(mark);
+
+        VehicleStatus statusEnum;
+        try {
+            statusEnum = VehicleStatus.fromString(status);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status inválido: " + status);
         }
-        if (request.idSeguro() != null){
-            Insurance insurance = insuranceRepository.findById(request.idSeguro())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Seguro não encontrado."));
-            vehicle.setInsurance(insurance);
+
+        List<Vehicle> vehicles = vehicleRepository.findByStatus(statusEnum);
+
+        if (vehicles.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhum veículo encontrado com status: " + status);
         }
-        if (request.idCor() != null){
-            Color color = colorRepository.findById(request.idCor())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cor não encontrada."));
-            vehicle.setColor(color);
+
+        return vehicles.stream()
+                .map(VehicleResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional
+    public Vehicle updateVehicle(String placa, VehicleRequest.update request) {
+        Vehicle vehicle = findById(placa);
+
+        if (request.status() != null) {
+            VehicleStatus novoStatus = VehicleStatus.valueOf(request.status().toUpperCase());
+
+            if (novoStatus == VehicleStatus.MANUTENCAO) {
+                LocalDate hoje = LocalDate.now();
+                boolean alugado = rentalRepository.existsActiveConflict(vehicle, hoje, hoje);
+
+                if (alugado) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Não é possível enviar um veículo alugado para manutenção.");
+                }
+            }
+
+            vehicle.setStatus(novoStatus);
         }
-        if (request.idModelo() != null){
-            Model model = modelRepository.findById(request.idModelo())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado."));
-            vehicle.setModel(model);
-        }
-        if (request.ano() != null){
-            vehicle.setAno(request.ano());
-        }
+
+        if (request.descricao() != null) vehicle.setDescricao(request.descricao());
+        if (request.ano() != null) vehicle.setAno(request.ano());
+        if (request.idCategoria() != null) vehicle.setCategory(findCategory(request.idCategoria()));
+        if (request.idMarca() != null) vehicle.setBrand(findBrand(request.idMarca()));
+        if (request.idCor() != null) vehicle.setColor(findColor(request.idCor()));
+        if (request.idModelo() != null) vehicle.setModel(findModel(request.idModelo()));
+        if (request.idSeguro() != null) vehicle.setInsurance(findInsurance(request.idSeguro()));
+
         return vehicleRepository.save(vehicle);
     }
 
@@ -133,5 +143,37 @@ public class VehicleService {
         }
         vehicleRepository.deleteById(placa);
     }
+
+    private Integer parseInteger(String value) {
+        if (value == null || value.isEmpty()) return null;
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parâmetro inválido: " + value);
+        }
+    }
+
+    private <T, ID> T findOptional(JpaRepository<T, ID> repo, ID id) {
+        if (id == null) return null;
+        return repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro não encontrado."));
+    }
+
+    @Transactional
+    public void atualizarStatusDoVeiculo(Vehicle vehicle) {
+        LocalDate hoje = LocalDate.now();
+        boolean alugado = rentalRepository.existsActiveConflict(vehicle, hoje, hoje);
+
+        if (vehicle.getStatus() != VehicleStatus.MANUTENCAO) {
+            vehicle.setStatus(alugado ? VehicleStatus.ALUGADO : VehicleStatus.DISPONIVEL);
+            vehicleRepository.save(vehicle);
+        }
+    }
+
+
+    private Category findCategory(Integer id) { return findOptional(categoryRepository, id); }
+    private Brand findBrand(Integer id) { return findOptional(brandRepository, id); }
+    private Color findColor(Integer id) { return findOptional(colorRepository, id); }
+    private Model findModel(Integer id) { return findOptional(modelRepository, id); }
+    private Insurance findInsurance(Long id) { return findOptional(insuranceRepository, id); }
 
 }

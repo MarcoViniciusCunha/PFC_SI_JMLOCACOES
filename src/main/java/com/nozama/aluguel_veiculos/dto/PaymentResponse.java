@@ -27,7 +27,7 @@ public record PaymentResponse(
                     payment.getData_pagamento(),
                     payment.getValor(),
                     payment.getFormaPagto(),
-                    payment.getStatus(),
+                    payment.getStatus().name(),
                     payment.getParcelas()
             );
     }
@@ -45,7 +45,7 @@ public record PaymentResponse(
                 payment.getData_pagamento(),
                 payment.getValor(),
                 payment.getFormaPagto(),
-                payment.getStatus(),
+                payment.getStatus().name(),
                 payment.getParcelas()
         );
     }

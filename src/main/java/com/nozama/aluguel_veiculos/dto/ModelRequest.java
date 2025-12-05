@@ -10,4 +10,8 @@ public record ModelRequest(
         @NotNull(message = "Insira a marca desse modelo.")
         Integer brandId
 ) {
+    public record update(
+            String nome,
+            Integer brandId
+    ) {}
 }

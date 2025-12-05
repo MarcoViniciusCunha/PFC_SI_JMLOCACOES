@@ -3,6 +3,8 @@ package com.nozama.aluguel_veiculos.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
 public record VehicleRequest(
         @NotBlank(message = "Informe a placa do veículo.")
         String placa,
@@ -29,6 +31,21 @@ public record VehicleRequest(
         Integer idCategoria,
 
         @NotNull(message = "Informe o seguro do veículo.")
-        Integer idSeguro
+        Long idSeguro,
+
+        @NotNull(message = "Informe o valor da diaria do veículo")
+        BigDecimal valorDiario
 ) {
+    public record update(
+            Integer idMarca,
+            Integer idCor,
+            Integer idModelo,
+            String status,
+            String descricao,
+            Integer idCategoria,
+            Long idSeguro,
+            Integer ano,
+            BigDecimal valorDiario
+    ) {
+    }
 }

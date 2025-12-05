@@ -26,9 +26,7 @@ public class Inspection {
     private Rental rental;
 
     private LocalDate data_inspecao;
-
     private String descricao;
-
     private boolean danificado = false;
 
     public Inspection(Rental rental, InspectionRequest request){

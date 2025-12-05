@@ -6,16 +6,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
 
-@Entity // mapeada como tabela no bd
-@Table(name = "app_user") // nome da tabela usada no bd
+@Entity
+@Table(name = "app_user")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "username") // gera equals e hash baseados em email
+@EqualsAndHashCode(of = "username")
 public class User {
 
-    // email pk
     @Id
     private String username;
 
@@ -23,7 +22,6 @@ public class User {
 
     public User(UserRequest userRequest) {
         this.username = userRequest.username();
-
         this.password = userRequest.password();
 
     }

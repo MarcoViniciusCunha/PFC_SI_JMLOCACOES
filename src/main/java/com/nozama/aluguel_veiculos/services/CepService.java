@@ -9,14 +9,19 @@ import java.util.Map;
 @Service
 public class CepService {
 
-    private final String viaCepUrl;
+    @Value("${viacep.url}")
+    private String viaCepUrl;
 
-    public CepService(@Value("${viacep.url}") String viaCepUrl){
-        this.viaCepUrl = viaCepUrl;
-    }
+    public Map<String, Object> buscarEndereco(String cep) {
+        if (cep == null || !cep.matches("\\d{8}")) {
+            return Map.of("erro", true, "mensagem", "CEP inválido");
+        }
 
-    public Map<String, String> buscarEndereco(String cep){
-        RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(viaCepUrl, Map.class, cep);
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            return restTemplate.getForObject(viaCepUrl.replace("{cep}", cep), Map.class);
+        } catch (Exception e) {
+            return Map.of("erro", true, "mensagem", "Erro ao consultar ViaCEP");
+        }
     }
 }

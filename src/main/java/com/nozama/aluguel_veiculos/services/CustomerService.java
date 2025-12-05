@@ -1,51 +1,45 @@
 package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
-import com.nozama.aluguel_veiculos.dto.CustomerPatchRequest;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
+import com.nozama.aluguel_veiculos.repository.RentalRepository;
+import com.nozama.aluguel_veiculos.utils.HashUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class CustomerService {
 
     private final CustomerRepository repository;
     private final CepService cepService;
-
-    public CustomerService(CustomerRepository repository, CepService cepService) {
-        this.repository = repository;
-        this.cepService = cepService;
-    }
+    private final RentalRepository rentalRepository;
 
     public Customer create(CustomerRequest request){
-        Customer customer = new Customer(request);
 
-        if(request.cep() != null && !request.cep().isEmpty()){
-            try {
-                Map<String, String> endereco = cepService.buscarEndereco(request.cep());
-                if (endereco.containsKey("erro")) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP inválido");
-                }
-                customer.setRua((String)endereco.get("logradouro"));
-                customer.setCidade((String)endereco.get("localidade"));
-                customer.setEstado((String)endereco.get("uf"));
-            } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao buscar endereço");
-            }
+        String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
+        repository.findByCpfHash(cpfHash).ifPresent(c -> {
+            throw new DataIntegrityViolationException("CPF já cadastrado");
+        });
+
+        Customer customer = new Customer(request);
+        if (request.rua() == null || request.rua().isBlank()) {
+            fillAddress(customer, request.cep());
         }
 
         try {
             return repository.save(customer);
         } catch (DataIntegrityViolationException e){
-            throw new RuntimeException("CNH, CPF ou email já cadatrado!");
+            throw new RuntimeException("CNH, CPF ou email já cadastrado!");
         }
-
     }
 
     public List<Customer> getAll(){
@@ -53,8 +47,7 @@ public class CustomerService {
     }
 
     public Customer getById(Long id){
-        return repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+        return findByIdOrThrow(id);
     }
 
     public List<Customer> getByName(String nome){
@@ -65,59 +58,123 @@ public class CustomerService {
        return customers;
     }
 
-    public Customer update(Long id, CustomerPatchRequest request){
-        Customer existing = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+    public Customer update(Long id, CustomerRequest.update request){
+        Customer existing = findByIdOrThrow(id);
+
+        if (request.cpf() != null) {
+            if (request.cpf().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF não pode ser vazio");
+            }
+            String cleanCpf = request.cpf().replaceAll("\\D", "");
+            if (!cleanCpf.matches("\\d{11}")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF deve ter 11 dígitos");
+            }
+            String cpfHash = HashUtils.hmacSha256Base64(cleanCpf);
+            repository.findByCpfHash(cpfHash).ifPresent(c -> {
+                if (!c.getId().equals(id)) {
+                    throw new DataIntegrityViolationException("CPF já cadastrado");
+                }
+            });
+            existing.setCpf(cleanCpf);
+        }
 
         if (request.cnh() != null) {
-            existing.setCnh(request.cnh());
+            if (request.cnh().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH não pode ser vazia");
+            }
+            String cleanCnh = request.cnh().replaceAll("\\D", "");
+            if (!cleanCnh.matches("\\d{11}")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH deve ter 11 dígitos");
+            }
+            existing.setCnh(cleanCnh);
+        } else if (existing.getCnh() == null || existing.getCnh().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH não pode ser nula");
         }
+
+
         if (request.nome() != null) {
+            if (request.nome().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome não pode ser vazio");
+            }
             existing.setNome(request.nome());
         }
-        if (request.cpf() != null) {
-            existing.setCpf(request.cpf());
-        }
+
         if (request.email() != null) {
-            existing.setEmail(request.email());
+            if (request.email().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email não pode ser vazio");
+            }
+            String emailLower = request.email().toLowerCase();
+            repository.findByEmail(emailLower).ifPresent(c -> {
+                if (!c.getId().equals(id)) {
+                    throw new DataIntegrityViolationException("Email já cadastrado");
+                }
+            });
+            existing.setEmail(emailLower);
         }
+
         if (request.telefone() != null) {
-            existing.setTelefone(request.telefone());
+            String cleanTel = request.telefone().replaceAll("\\D", "");
+            if (!cleanTel.matches("\\d{10,11}")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone inválido");
+            }
+            existing.setTelefone(cleanTel);
         }
+
+        if (request.cep() != null) {
+            if (request.cep().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP não pode ser vazio");
+            }
+
+            existing.setCep(request.cep());
+            fillAddress(existing, request.cep());
+        }
+
         if (request.numero() != null) {
+            if (request.numero().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Número não pode ser vazio");
+            }
             existing.setNumero(request.numero());
         }
+
         if (request.data_nasc() != null) {
             existing.setData_nasc(request.data_nasc());
         }
 
-        if (request.cep() != null) {
-            existing.setCep(request.cep());
+        return repository.save(existing);
+    }
+
+    public void delete(Long id) {
+        Customer existing = findByIdOrThrow(id);
+
+        boolean possuiLocacoes = rentalRepository.existsByCustomerId(id);
+        if (possuiLocacoes) {
+            throw new IllegalStateException("Cliente possui locações e não pode ser excluído");
+        }
+
+        repository.delete(existing);
+    }
+
+    private Customer findByIdOrThrow(Long id){
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+    }
+
+    private void fillAddress(Customer customer, String cep){
+        if(cep != null && !cep.isEmpty()){
             try {
-                Map<String, String> endereco = cepService.buscarEndereco(request.cep());
-                if (endereco.containsKey("erro")) {
+                Map<String, Object> endereco = cepService.buscarEndereco(cep);
+                if(endereco.containsKey("erro")){
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP inválido");
                 }
-                existing.setRua((String) endereco.get("logradouro"));
-                existing.setCidade((String)endereco.get("localidade"));
-                existing.setEstado((String)endereco.get("uf"));
+                customer.setRua((String) endereco.get("logradouro"));
+                customer.setCidade((String) endereco.get("localidade"));
+                customer.setEstado((String) endereco.get("uf"));
+            } catch (RestClientException e) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Serviço de CEP indisponível");
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erro ao buscar endereço");
             }
         }
-
-        try {
-            return repository.save(existing);
-        } catch (DataIntegrityViolationException e){
-            throw new RuntimeException("CNH, CPF ou email já cadastrado!");
-        }
-
-    }
-
-    public void delete(Long id){
-        Customer existing = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
-        repository.delete(existing);
     }
 
 }

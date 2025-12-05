@@ -20,30 +20,28 @@ import java.util.List;
 public class InspectionController {
 
     private final InspectionService service;
-    private final InspectionRepository inspectionRepository;
+    private final InspectionRepository repository;
 
     @PostMapping
     public ResponseEntity<InspectionResponse> create(@RequestBody @Valid InspectionRequest request){
-        Inspection inspection = service.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(InspectionResponse.fromEntity(inspection));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(InspectionResponse.fromEntity(service.create(request)));
     }
 
     @GetMapping
     public ResponseEntity<List<InspectionResponse>> getAll(){
-        List<Inspection> inspections = inspectionRepository.findAll();
-
-        List<InspectionResponse> response = inspections.stream()
-                .map(InspectionResponse::fromEntity)
-                .toList();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                repository.findAll().stream()
+                        .map(InspectionResponse::fromEntity)
+                        .toList()
+        );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<InspectionResponse> getById(@PathVariable Long id){
-        Inspection inspection = service.findById(id);
-
-        return ResponseEntity.ok(InspectionResponse.fromEntity(inspection));
+        return ResponseEntity.ok(
+                InspectionResponse.fromEntity(service.findById(id))
+        );
     }
 
     @DeleteMapping("/{id}")
@@ -55,7 +53,8 @@ public class InspectionController {
     @PatchMapping("/{id}")
     public ResponseEntity<InspectionResponse> update(@PathVariable Long id, @RequestBody InspectionRequest.update request) {
         Inspection inspection = service.findById(id);
-        Inspection updatedInspection = service.update(inspection, request);
-        return ResponseEntity.ok(InspectionResponse.fromEntity(updatedInspection));
+        return ResponseEntity.ok(
+                InspectionResponse.fromEntity(service.update(inspection, request))
+        );
     }
 }

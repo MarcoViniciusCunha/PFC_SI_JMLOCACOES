@@ -7,10 +7,13 @@ import com.nozama.aluguel_veiculos.repository.PaymentRepository;
 import com.nozama.aluguel_veiculos.services.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -29,7 +32,7 @@ public class PaymentController {
 
     @GetMapping
     public ResponseEntity<List<PaymentResponse>> getAll(){
-        List<Payment> payments = repository.findAll();
+        List<Payment> payments = service.findAll();
 
         List<PaymentResponse> response = payments.stream()
                 .map(PaymentResponse::fromEntity)
@@ -43,6 +46,21 @@ public class PaymentController {
         Payment payment = service.findById(id);
         return ResponseEntity.ok().body(PaymentResponse.fromEntity(payment));
     }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<PaymentResponse>> filterPayments(
+            @RequestParam(required = false) LocalDate data,
+            @RequestParam(required = false) String formaPagto,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String placa,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                service.filterPayments(data, formaPagto, status, customerId, placa, pageable)
+        );
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){

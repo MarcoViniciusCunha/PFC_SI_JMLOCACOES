@@ -1,75 +1,72 @@
 package com.nozama.aluguel_veiculos.controllers;
 
 import com.nozama.aluguel_veiculos.domain.Vehicle;
+import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.VehicleFilter;
-import com.nozama.aluguel_veiculos.dto.VehiclePatchRequest;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
+import com.nozama.aluguel_veiculos.dto.VehicleResponse;
 import com.nozama.aluguel_veiculos.services.VehicleService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/vehicles")
+@RequiredArgsConstructor
 public class VehicleController {
 
     private final VehicleService service;
 
-    public VehicleController(VehicleService service) {
-        this.service = service;
-    }
-
     @PostMapping
-    public ResponseEntity<Vehicle> create(@RequestBody @Valid VehicleRequest request){
-        Vehicle saved = service.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<VehicleResponse> create(@RequestBody @Valid VehicleRequest request){
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(VehicleResponse.fromEntity(service.create(request)));
     }
 
     @GetMapping
-    public ResponseEntity<List<Vehicle>> getAll(){
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<VehicleResponse>> getAll() {
+        return ResponseEntity.ok(
+                service.findAll().stream().map(VehicleResponse::fromEntity).toList()
+        );
     }
 
     @GetMapping("/{placa}")
-    public ResponseEntity<Vehicle> getByPlaca(@PathVariable String placa){
-        return ResponseEntity.ok(service.findById(placa));
+    public ResponseEntity<VehicleResponse> getByPlaca(@PathVariable String placa){
+        return ResponseEntity.ok(VehicleResponse.fromEntity(service.findById(placa)));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Vehicle>> search(
+    public ResponseEntity<List<VehicleResponse>> search(
             @RequestParam(required = false) String placa,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String model,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer ano,
             @RequestParam(required = false) String status) {
 
-        VehicleFilter filter = new VehicleFilter();
-        filter.setPlaca(placa);
+        return ResponseEntity.ok(service.searchVehicles(placa, categoria, brand, model, color, ano, status));
+    }
 
-        filter.setIdCategoria(categoria != null && !categoria.isEmpty() ? Integer.valueOf(categoria) : null);
-        filter.setIdMarca(brand != null && !brand.isEmpty() ? Integer.valueOf(brand) : null);
-        filter.setIdCor(color != null && !color.isEmpty() ? Integer.valueOf(color) : null);
-
-        filter.setAno(ano);
-        filter.setStatus(status != null && !status.isEmpty() ? status.toUpperCase() : null);
-
-        List<Vehicle> vehicles = service.searchVehicles(filter);
-        return ResponseEntity.ok(vehicles);
+    @GetMapping("/status")
+    public ResponseEntity<List<VehicleResponse>> getByStatus(@RequestParam String status){
+        return ResponseEntity.ok(service.findByStatus(status));
     }
 
     @PatchMapping("/{placa}")
-    public ResponseEntity<Vehicle> update(@PathVariable String placa, @RequestBody @Valid VehiclePatchRequest request){
-        Vehicle updated = service.updateVehicle(placa, request);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<VehicleResponse> update(@PathVariable String placa, @RequestBody @Valid VehicleRequest.update request){
+        return ResponseEntity.ok(VehicleResponse.fromEntity(service.updateVehicle(placa, request)));
     }
 
     @DeleteMapping("/{placa}")
     public ResponseEntity<Void> delete(@PathVariable String placa){
         service.delete(placa);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

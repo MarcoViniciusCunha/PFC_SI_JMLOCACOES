@@ -6,7 +6,11 @@ import com.nozama.aluguel_veiculos.dto.FineRequest;
 import com.nozama.aluguel_veiculos.repository.FineRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
@@ -19,27 +23,20 @@ public class FineService {
     private final RentalRepository rentalRepository;
 
     public Fine create(FineRequest request) {
-        Rental rental = rentalRepository.findRentalByVehiclePlateAndDate(
-                request.placa(),
-                request.dataMulta()
-                )
-                .orElseThrow(() -> new RuntimeException("Locação não encontrada com o veículo de placa " + request.placa()
-                        + " na data de " + request.dataMulta()
-                ));
+        String placa = request.placa();
+        LocalDate dataMulta = request.dataMulta();
+        Rental rental = findRental(placa, dataMulta);
 
-        Fine fine = new Fine(rental, request);
-
-        return repository.save(fine);
+        return repository.save(new Fine(rental, request));
     }
 
     public Fine findById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Multa não encontrada com id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Multa não encontrada com id: " + id));
     }
 
     public void delete(Long id) {
-        Fine fine = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Multa não encontrada com id: " + id));
+        Fine fine = findById(id);
         repository.delete(fine);
     }
 
@@ -54,20 +51,36 @@ public class FineService {
             fine.setValor(request.valor());
         }
         if (request.placa() != null && !request.placa().equals(fine.getRental().getVehicle().getPlaca())) {
-            LocalDate dataBusca = request.dataMulta() != null ? request.dataMulta() : fine.getData_multa();
+            LocalDate dataMulta = request.dataMulta() != null ? request.dataMulta() : fine.getData_multa();
+            String placa = request.placa();
 
-            Rental rental = rentalRepository.findRentalByVehiclePlateAndDate(
-                    request.placa(),
-                    dataBusca
-            ).orElseThrow(() -> new RuntimeException(
-                    "Locação não encontrada com o veículo de placa " + request.placa()
-                            + " na data de " + dataBusca
-            ));
+            Rental rental = findRental(placa, dataMulta);
 
             fine.setRental(rental);
         }
 
         return repository.save(fine);
     }
+
+    private Rental findRental(String placa, LocalDate dataMulta) {
+        return rentalRepository.findRentalByVehiclePlateAndDate(
+                        placa,
+                        dataMulta
+                )
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Locação não encontrada com o veículo de placa " + placa
+                        + " na data de " + dataMulta
+                ));
+    }
+
+    public Page<Fine> search(
+            String placa,
+            Long customerId,
+            LocalDate dataInicial,
+            LocalDate dataFinal,
+            Pageable pageable
+    ) {
+        return repository.search(placa, customerId, dataInicial, dataFinal, pageable);
+    }
+
 
 }

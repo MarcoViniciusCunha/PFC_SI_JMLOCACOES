@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "vehicle")
 @Getter
@@ -45,6 +47,9 @@ public class Vehicle {
     @JoinColumn(name = "id_seguro")
     private Insurance insurance;
 
+    @Column(name = "valor_diario", nullable = false)
+    private BigDecimal valorDiario;
+
     public Vehicle(VehicleRequest request, Category category, Insurance insurance, Brand brand, Color color, Model model){
         this.placa = request.placa();
 
@@ -63,5 +68,7 @@ public class Vehicle {
         this.category = category;
 
         this.insurance = insurance;
+
+        this.valorDiario = request.valorDiario();
     }
 }

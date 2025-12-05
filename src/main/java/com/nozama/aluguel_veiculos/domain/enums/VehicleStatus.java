@@ -22,7 +22,7 @@ public enum VehicleStatus {
     @JsonCreator
     public static VehicleStatus fromString(String value) {
         for (VehicleStatus status : VehicleStatus.values()) {
-            if (status.getDisplayName().equalsIgnoreCase(value)) {
+            if (status.name().equalsIgnoreCase(value) || status.getDisplayName().equalsIgnoreCase(value)) {
                 return status;
             }
         }

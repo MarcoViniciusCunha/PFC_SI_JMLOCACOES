@@ -17,7 +17,6 @@ public record InspectionResponse(
                 inspection.getRental().getVehicle().getPlaca(),
                 inspection.getRental().getCustomer().getNome()
         );
-
         return new InspectionResponse(
                 inspection.getId(),
                 rentalInfo,
@@ -27,13 +26,7 @@ public record InspectionResponse(
         );
     }
 
-    public static InspectionResponse fromEntitySummary(Inspection inspection ) {
-        RentalInfo rentalInfo = new RentalInfo(
-                inspection.getRental().getId(),
-                inspection.getRental().getVehicle().getPlaca(),
-                inspection.getRental().getCustomer().getNome()
-        );
-
+    public static InspectionResponse fromEntitySummary(Inspection inspection) {
         return new InspectionResponse(
                 inspection.getId(),
                 null,

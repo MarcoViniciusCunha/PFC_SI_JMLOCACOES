@@ -1,8 +1,6 @@
 package com.nozama.aluguel_veiculos.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,19 +12,20 @@ public record PaymentRequest(
         @NotNull(message = "Insira a data do pagamento")
         LocalDate dataPagamento,
 
-        @Positive(message = "O valor precisa ser positivo")
-        @NotNull(message = "Insira o valor do pagamento")
-        BigDecimal valor,
-
         @NotBlank(message = "Insira a forma de pagamento")
         String formaPagto,
 
         @NotBlank(message = "Insira o status")
+        @Pattern(regexp = "PAGO|PENDENTE|CANCELADO", message = "Status inválido")
         String status,
 
         Integer parcelas,
 
-        String descricao
+        String descricao,
+
+        @PositiveOrZero(message = "O juros não pode ser negativo")
+        BigDecimal juros
+
 ) {
     public record update(
             Long rentalId,
@@ -36,7 +35,8 @@ public record PaymentRequest(
             String formaPagto,
             String status,
             Integer parcelas,
-            String descricao
+            String descricao,
+            BigDecimal juros
     ){
 
     }
