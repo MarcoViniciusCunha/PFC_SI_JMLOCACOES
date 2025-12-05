@@ -35,7 +35,6 @@ class FineServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    // --- CREATE ---
     @Test
     void deveCriarMultaComSucesso() {
         String placa = "ABC1234";

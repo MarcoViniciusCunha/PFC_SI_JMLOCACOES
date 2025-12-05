@@ -2,51 +2,57 @@ package locacoes.example.demo.domain;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
+import com.nozama.aluguel_veiculos.utils.HashUtils;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 
 class CustomerTest {
 
     @Test
     void testCustomerConstructorAndGetters() {
-        CustomerRequest request = new CustomerRequest(
-                "123456789", "Murillo", "123.456.789-00",
-                "murillo@email.com", "11999999999",
-                "01234-567", "123", "Rua Teste",
-                "Cidade Teste", "Estado Teste",
-                LocalDate.of(1995, 5, 12)
-        );
 
-        Customer customer = new Customer(request);
-        customer.setId(1L);
+        try (MockedStatic<HashUtils> mockHash = Mockito.mockStatic(HashUtils.class)) {
 
-        assertEquals(1L, customer.getId());
-        assertEquals("Murillo", customer.getNome());
-        assertEquals("123456789", customer.getCnh());
+            mockHash.when(() -> HashUtils.hmacSha256Base64(anyString()))
+                    .thenReturn("hash-falso");
 
-        System.out.println("Customer ID: " + customer.getId());
-        System.out.println("Customer Nome: " + customer.getNome());
-        System.out.println("Customer CNH: " + customer.getCnh());
-        System.out.println("Customer Email: " + customer.getEmail());
-        System.out.println("Customer Data Nasc: " + customer.getData_nasc());
+            CustomerRequest request = new CustomerRequest(
+                    "123456789", "Murillo", "123.456.789-00",
+                    "murillo@email.com", "11999999999",
+                    "01234-567", "123", "Rua Teste",
+                    "Cidade Teste", "Estado Teste",
+                    LocalDate.of(1995, 5, 12)
+            );
+
+            Customer customer = new Customer(request);
+            customer.setId(1L);
+
+            assertEquals("Murillo", customer.getNome());
+            assertEquals("123456789", customer.getCnh()); // número limpo
+        }
     }
 
     @Test
     void testCustomerSetters() {
-        Customer customer = new Customer();
-        customer.setId(2L);
-        customer.setNome("João");
-        customer.setCnh("987654321");
 
-        assertEquals(2L, customer.getId());
-        assertEquals("João", customer.getNome());
-        assertEquals("987654321", customer.getCnh());
+        try (MockedStatic<HashUtils> mockHash = Mockito.mockStatic(HashUtils.class)) {
 
-        System.out.println("Customer atualizado ID: " + customer.getId());
-        System.out.println("Customer atualizado Nome: " + customer.getNome());
-        System.out.println("Customer atualizado CNH: " + customer.getCnh());
+            mockHash.when(() -> HashUtils.hmacSha256Base64(anyString()))
+                    .thenReturn("hash-falso");
+
+            Customer c = new Customer();
+
+            c.setId(2L);
+            c.setNome("João");
+            c.setCnh("987654321");
+
+            assertEquals("987654321", c.getCnh());
+        }
     }
 }

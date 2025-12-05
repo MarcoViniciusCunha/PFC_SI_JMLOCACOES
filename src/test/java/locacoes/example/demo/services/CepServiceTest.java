@@ -5,52 +5,51 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class CepServiceTest {
 
     private CepService cepService;
-    private RestTemplate restTemplateMock;
 
     @BeforeEach
-    void setUp() {
-        cepService = new CepService("https://viacep.com.br/ws/{cep}/json/");
-        restTemplateMock = mock(RestTemplate.class);
+    void setup() {
+        cepService = new CepService();
+
+        try {
+            var field = CepService.class.getDeclaredField("viaCepUrl");
+            field.setAccessible(true);
+            field.set(cepService, "https://viacep.com.br/ws/{cep}/json/");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
-    void testBuscarEndereco() {
-        Map<String, String> enderecoMock = new HashMap<>();
-        enderecoMock.put("logradouro", "Rua Teste");
-        enderecoMock.put("bairro", "Bairro Teste");
-        enderecoMock.put("localidade", "Cidade Teste");
-        enderecoMock.put("uf", "ST");
+    void testBuscarEnderecoValido() {
+        String cep = "01001000";
 
-        RestTemplate restTemplate = mock(RestTemplate.class);
-        when(restTemplate.getForObject("https://viacep.com.br/ws/{cep}/json/", Map.class, "12345678"))
-                .thenReturn(enderecoMock);
+        Map<String, Object> result = cepService.buscarEndereco(cep);
 
-        Map<String, String> endereco = restTemplate.getForObject(
-                "https://viacep.com.br/ws/{cep}/json/",
-                Map.class,
-                "12345678"
-        );
+        System.out.println("BuscarEndereco returned: " + result);
 
-        System.out.println("Logradouro: " + endereco.get("logradouro"));
-        System.out.println("Bairro: " + endereco.get("bairro"));
-        System.out.println("Cidade: " + endereco.get("localidade"));
-        System.out.println("UF: " + endereco.get("uf"));
-
-        assertNotNull(endereco);
-        assertEquals("Rua Teste", endereco.get("logradouro"));
-        assertEquals("Bairro Teste", endereco.get("bairro"));
-        assertEquals("Cidade Teste", endereco.get("localidade"));
-        assertEquals("ST", endereco.get("uf"));
+        assertFalse(result.containsKey("erro"));
+        assertEquals("01001-000", result.get("cep"));
+        assertEquals("Praça da Sé", result.get("logradouro"));
     }
+
+    @Test
+    void testBuscarEnderecoInvalido() {
+        String cepInvalido = "123";
+
+        Map<String, Object> result = cepService.buscarEndereco(cepInvalido);
+
+        System.out.println("BuscarEndereco inválido returned: " + result);
+
+        assertTrue((Boolean) result.get("erro"));
+        assertEquals("CEP inválido", result.get("mensagem"));
+    }
+
 }

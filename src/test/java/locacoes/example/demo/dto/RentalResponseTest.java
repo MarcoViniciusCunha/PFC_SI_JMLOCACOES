@@ -1,20 +1,23 @@
 package locacoes.example.demo.dto;
 
-import com.nozama.aluguel_veiculos.domain.*;
+import com.nozama.aluguel_veiculos.domain.Customer;
+import com.nozama.aluguel_veiculos.domain.Model;
+import com.nozama.aluguel_veiculos.domain.Vehicle;
+import com.nozama.aluguel_veiculos.domain.Rental;
+import com.nozama.aluguel_veiculos.domain.enums.RentalStatus;
 import com.nozama.aluguel_veiculos.dto.RentalResponse;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class RentalResponseTest {
 
-
     @Test
     void testFromEntityBasic() {
+
         Customer customer = new Customer();
         customer.setNome("ClienteBasic");
 
@@ -33,6 +36,7 @@ class RentalResponseTest {
         rental.setEndDate(LocalDate.now().plusDays(3));
         rental.setPrice(new BigDecimal("800.00"));
         rental.setReturned(false);
+        rental.setStatus(RentalStatus.ATIVA);
 
         RentalResponse response = RentalResponse.fromEntityBasic(rental);
 
@@ -50,6 +54,7 @@ class RentalResponseTest {
         assertEquals("ModeloB", response.modelo());
         assertEquals("ClienteBasic", response.customerName());
         assertEquals("ATIVA", response.status());
+
         assertNull(response.fines());
         assertNull(response.inspections());
         assertNull(response.payments());

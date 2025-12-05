@@ -3,12 +3,10 @@ package locacoes.example.demo.services;
 import com.nozama.aluguel_veiculos.domain.*;
 import com.nozama.aluguel_veiculos.domain.enums.VehicleStatus;
 import com.nozama.aluguel_veiculos.dto.VehicleRequest;
-import com.nozama.aluguel_veiculos.dto.VehicleResponse;
 import com.nozama.aluguel_veiculos.repository.*;
 import com.nozama.aluguel_veiculos.services.VehicleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
@@ -25,6 +23,7 @@ class VehicleServiceTest {
     private BrandRepository markRepository;
     private ColorRepository colorRepository;
     private ModelRepository modelRepository;
+    private RentalRepository rentalRepository;
 
     private VehicleService vehicleService;
 
@@ -36,14 +35,21 @@ class VehicleServiceTest {
         markRepository = mock(BrandRepository.class);
         colorRepository = mock(ColorRepository.class);
         modelRepository = mock(ModelRepository.class);
+        rentalRepository = mock(RentalRepository.class);
 
-        vehicleService = new VehicleService(vehicleRepository, categoryRepository, insuranceRepository,
-                markRepository, colorRepository, modelRepository);
+        vehicleService = new VehicleService(
+                vehicleRepository,
+                categoryRepository,
+                insuranceRepository,
+                markRepository,
+                colorRepository,
+                modelRepository,
+                rentalRepository
+        );
     }
 
     @Test
     void testCreateVehicleSuccess() {
-        // Mock da request
         VehicleRequest request = mock(VehicleRequest.class);
         when(request.idCategoria()).thenReturn(1);
         when(request.idMarca()).thenReturn(2);
@@ -76,7 +82,8 @@ class VehicleServiceTest {
         model.setId(3);
         when(modelRepository.findById(3)).thenReturn(Optional.of(model));
 
-        when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(vehicleRepository.save(any(Vehicle.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Vehicle vehicle = vehicleService.create(request);
 
@@ -90,14 +97,23 @@ class VehicleServiceTest {
         assertEquals(model, vehicle.getModel());
     }
 
-
     @Test
     void testFindByIdSuccess() {
         Vehicle vehicle = new Vehicle();
         vehicle.setPlaca("ABC1234");
-        when(vehicleRepository.findById("ABC1234")).thenReturn(Optional.of(vehicle));
+
+        when(vehicleRepository.findById("ABC1234"))
+                .thenReturn(Optional.of(vehicle));
+
+        // evitar erro durante atualizarStatusDoVeiculo()
+        when(rentalRepository.existsActiveConflict(any(), any(), any()))
+                .thenReturn(false);
+
+        when(vehicleRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Vehicle result = vehicleService.findById("ABC1234");
+
         assertEquals(vehicle, result);
     }
 
@@ -105,8 +121,11 @@ class VehicleServiceTest {
     void testFindByIdNotFound() {
         when(vehicleRepository.findById("XYZ9999")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> vehicleService.findById("XYZ9999"));
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> vehicleService.findById("XYZ9999")
+        );
+
         assertEquals("Veículo não encontrado.", ex.getReason());
     }
 
@@ -116,6 +135,7 @@ class VehicleServiceTest {
         doNothing().when(vehicleRepository).deleteById("ABC1234");
 
         assertDoesNotThrow(() -> vehicleService.delete("ABC1234"));
+
         verify(vehicleRepository, times(1)).deleteById("ABC1234");
     }
 
@@ -123,8 +143,11 @@ class VehicleServiceTest {
     void testDeleteVehicleNotFound() {
         when(vehicleRepository.existsById("XYZ9999")).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> vehicleService.delete("XYZ9999"));
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> vehicleService.delete("XYZ9999")
+        );
+
         assertEquals("Veículo não encontrado.", ex.getReason());
     }
 }

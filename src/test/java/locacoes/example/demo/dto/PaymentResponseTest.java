@@ -4,6 +4,7 @@ import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.domain.Payment;
 import com.nozama.aluguel_veiculos.domain.Rental;
 import com.nozama.aluguel_veiculos.domain.Vehicle;
+import com.nozama.aluguel_veiculos.domain.enums.PaymentStatus;
 import com.nozama.aluguel_veiculos.dto.PaymentResponse;
 import org.junit.jupiter.api.Test;
 
@@ -33,20 +34,10 @@ class PaymentResponseTest {
         payment.setData_pagamento(LocalDate.now());
         payment.setValor(new BigDecimal("500.00"));
         payment.setFormaPagto("Cartão");
-        payment.setStatus("Pago");
+        payment.setStatus(PaymentStatus.PAGO);
         payment.setParcelas(2);
 
         PaymentResponse response = PaymentResponse.fromEntity(payment);
-
-        System.out.println("ID Payment: " + response.id());
-        System.out.println("ID Rental: " + response.rental().id());
-        System.out.println("Vehicle Placa: " + response.rental().vehiclePlaca());
-        System.out.println("Customer Nome: " + response.rental().customerNome());
-        System.out.println("Data Pagamento: " + response.dataPagamento());
-        System.out.println("Valor: " + response.valor());
-        System.out.println("Forma Pagto: " + response.formaPagto());
-        System.out.println("Status: " + response.status());
-        System.out.println("Parcelas: " + response.parcelas());
 
         assertEquals(100L, response.id());
         assertNotNull(response.rental());
@@ -55,7 +46,9 @@ class PaymentResponseTest {
         assertEquals("Murillão", response.rental().customerNome());
         assertEquals(new BigDecimal("500.00"), response.valor());
         assertEquals("Cartão", response.formaPagto());
-        assertEquals("Pago", response.status());
+
+        assertEquals(PaymentStatus.PAGO.name(), response.status());
+
         assertEquals(2, response.parcelas());
     }
 
@@ -78,25 +71,18 @@ class PaymentResponseTest {
         payment.setData_pagamento(LocalDate.now());
         payment.setValor(new BigDecimal("300.00"));
         payment.setFormaPagto("Dinheiro");
-        payment.setStatus("Pendente");
+        payment.setStatus(PaymentStatus.PENDENTE);
         payment.setParcelas(1);
 
         PaymentResponse response = PaymentResponse.fromEntitySummary(payment);
 
-        System.out.println("ID Payment: " + response.id());
-        System.out.println("Rental Info: " + response.rental());
-        System.out.println("Data Pagamento: " + response.dataPagamento());
-        System.out.println("Valor: " + response.valor());
-        System.out.println("Forma Pagto: " + response.formaPagto());
-        System.out.println("Status: " + response.status());
-        System.out.println("Parcelas: " + response.parcelas());
-
-        // Validar valores
         assertEquals(200L, response.id());
         assertNull(response.rental());
         assertEquals(new BigDecimal("300.00"), response.valor());
         assertEquals("Dinheiro", response.formaPagto());
-        assertEquals("Pendente", response.status());
+
+        assertEquals(PaymentStatus.PENDENTE.name(), response.status());
+
         assertEquals(1, response.parcelas());
     }
 }

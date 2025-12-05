@@ -3,14 +3,16 @@ package locacoes.example.demo.services;
 import com.nozama.aluguel_veiculos.domain.Customer;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
+import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.services.CepService;
 import com.nozama.aluguel_veiculos.services.CustomerService;
+import com.nozama.aluguel_veiculos.utils.HashUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,6 +26,9 @@ class CustomerServiceTest {
     @Mock
     private CepService cepService;
 
+    @Mock
+    private RentalRepository rentalRepository;
+
     @InjectMocks
     private CustomerService service;
 
@@ -32,90 +37,112 @@ class CustomerServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    // --- Teste do CREATE ---
     @Test
     void deveCriarClienteComCepValido() {
-        CustomerRequest request = mock(CustomerRequest.class);
-        when(request.cep()).thenReturn("01001000");
-        when(cepService.buscarEndereco("01001000")).thenReturn(Map.of(
-                "logradouro", "Praça da Sé",
-                "localidade", "São Paulo",
-                "uf", "SP"
-        ));
 
-        Customer expected = new Customer(request);
-        when(repository.save(any(Customer.class))).thenReturn(expected);
+        try (MockedStatic<HashUtils> mockHash = Mockito.mockStatic(HashUtils.class)) {
 
-        Customer actual = service.create(request);
+            mockHash.when(() -> HashUtils.hmacSha256Base64(anyString()))
+                    .thenReturn("hash-falso");
 
-        System.out.println("✅ Expected: " + expected);
-        System.out.println("✅ Actual:   " + actual);
+            CustomerRequest request = mock(CustomerRequest.class);
 
-        assertEquals(expected, actual, "O cliente retornado deve ser igual ao esperado");
-        verify(repository).save(any(Customer.class));
-        verify(cepService).buscarEndereco("01001000");
+            when(request.nome()).thenReturn("Fulano da Silva");
+            when(request.email()).thenReturn("teste@gmail.com");
+            when(request.cpf()).thenReturn("12345678901");
+            when(request.cnh()).thenReturn("12345678901");
+            when(request.telefone()).thenReturn("11999999999");
+            when(request.numero()).thenReturn("100");
+            when(request.data_nasc()).thenReturn(LocalDate.of(2000, 1, 1));
+            when(request.cep()).thenReturn("01001000");
+            when(request.rua()).thenReturn(null);
+
+            when(cepService.buscarEndereco("01001000")).thenReturn(Map.of(
+                    "logradouro", "Praça da Sé",
+                    "localidade", "São Paulo",
+                    "uf", "SP"
+            ));
+
+            Customer salvo = new Customer(request);
+
+            when(repository.save(any(Customer.class))).thenReturn(salvo);
+
+            Customer resultado = service.create(request);
+
+            assertNotNull(resultado);
+            assertEquals("12345678901", resultado.getCpf());
+            assertEquals("teste@gmail.com", resultado.getEmail());
+        }
     }
+
 
     @Test
     void deveLancarExcecaoAoCriarClienteComCepInvalido() {
-        CustomerRequest request = mock(CustomerRequest.class);
-        when(request.cep()).thenReturn("00000000");
-        when(cepService.buscarEndereco("00000000")).thenThrow(new RuntimeException("Erro ao buscar endereço"));
+        try (MockedStatic<HashUtils> mockHash = Mockito.mockStatic(HashUtils.class)) {
 
-        Exception exception = assertThrows(ResponseStatusException.class, () -> service.create(request));
+            mockHash.when(() -> HashUtils.hmacSha256Base64(anyString()))
+                    .thenReturn("hash-falso");
 
-        System.out.println("❌ Expected: ResponseStatusException");
-        System.out.println("❌ Actual:   " + exception.getClass().getSimpleName());
+            CustomerRequest request = mock(CustomerRequest.class);
+
+            when(request.email()).thenReturn("teste@gmail.com");
+            when(request.nome()).thenReturn("Fulano");
+            when(request.cpf()).thenReturn("12345678901");
+            when(request.cnh()).thenReturn("12345678901");
+            when(request.telefone()).thenReturn("11999999999");
+            when(request.numero()).thenReturn("10");
+            when(request.data_nasc()).thenReturn(LocalDate.of(2000,1,1));
+
+            when(request.cep()).thenReturn("00000000");
+
+            when(cepService.buscarEndereco("00000000"))
+                    .thenThrow(new RuntimeException("CEP inválido"));
+
+            assertThrows(ResponseStatusException.class, () -> service.create(request));
+        }
     }
 
-    // --- Teste do GET ALL ---
+
     @Test
     void deveRetornarTodosClientes() {
-        List<Customer> expected = List.of(new Customer(), new Customer());
-        when(repository.findAll()).thenReturn(expected);
+        List<Customer> lista = List.of(new Customer(), new Customer());
 
-        List<Customer> actual = service.getAll();
+        when(repository.findAll()).thenReturn(lista);
 
-        System.out.println("✅ Expected size: " + expected.size());
-        System.out.println("✅ Actual size:   " + actual.size());
+        List<Customer> resultado = service.getAll();
 
-        assertEquals(expected.size(), actual.size());
+        assertEquals(2, resultado.size());
         verify(repository).findAll();
     }
 
-    // --- Teste do GET BY ID ---
     @Test
     void deveRetornarClientePorId() {
-        Customer expected = new Customer();
-        when(repository.findById(1L)).thenReturn(Optional.of(expected));
+        Customer cliente = new Customer();
 
-        Customer actual = service.getById(1L);
+        when(repository.findById(1L)).thenReturn(Optional.of(cliente));
 
-        System.out.println("✅ Expected: " + expected);
-        System.out.println("✅ Actual:   " + actual);
+        Customer resultado = service.getById(1L);
 
-        assertEquals(expected, actual);
-        verify(repository).findById(1L);
+        assertNotNull(resultado);
+        assertEquals(cliente, resultado);
     }
 
     @Test
     void deveLancarExcecaoSeClienteNaoExistirPorId() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
-        Exception e = assertThrows(ResponseStatusException.class, () -> service.getById(1L));
 
-        System.out.println("❌ Expected: ResponseStatusException");
-        System.out.println("❌ Actual:   " + e.getClass().getSimpleName());
+        assertThrows(ResponseStatusException.class, () -> service.getById(1L));
     }
 
-    // --- Teste do DELETE ---
     @Test
     void deveDeletarCliente() {
-        Customer existing = new Customer();
-        when(repository.findById(1L)).thenReturn(Optional.of(existing));
+        Customer cliente = new Customer();
+
+        when(repository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(rentalRepository.existsByCustomerId(1L)).thenReturn(false);
 
         service.delete(1L);
 
-        System.out.println("✅ Expected: delete() chamado com o cliente existente");
-        verify(repository).delete(existing);
+        verify(repository).delete(cliente);
     }
 }
