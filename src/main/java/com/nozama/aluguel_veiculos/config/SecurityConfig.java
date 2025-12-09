@@ -2,6 +2,7 @@ package com.nozama.aluguel_veiculos.config;
 
 import com.nozama.aluguel_veiculos.security.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,6 +24,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
+
+    @Value("${cors.allowed-origin}")
+    private String allowedOrigin;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
