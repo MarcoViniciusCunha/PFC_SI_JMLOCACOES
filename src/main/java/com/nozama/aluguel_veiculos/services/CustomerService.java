@@ -39,7 +39,7 @@ public class CustomerService {
         try {
             return repository.save(customer);
         } catch (DataIntegrityViolationException e){
-            throw new RuntimeException("CNH, CPF ou email já cadastrado!");
+            throw new RuntimeException("CNH, CPF ou email já cadastrado! ");
         }
     }
 
@@ -78,7 +78,6 @@ public class CustomerService {
             });
             existing.setCpf(cleanCpf);
         }
-
         if (request.cnh() != null) {
             if (request.cnh().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH não pode ser vazia");
