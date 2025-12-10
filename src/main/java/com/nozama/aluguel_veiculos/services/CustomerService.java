@@ -1,6 +1,7 @@
 package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
+import com.nozama.aluguel_veiculos.domain.enums.RentalStatus;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
@@ -146,13 +147,47 @@ public class CustomerService {
     public void delete(Long id) {
         Customer existing = findByIdOrThrow(id);
 
-        boolean possuiLocacoes = rentalRepository.existsByCustomerId(id);
-        if (possuiLocacoes) {
-            throw new IllegalStateException("Cliente possui locações e não pode ser excluído");
+        boolean possuiLocacoesAtivas = rentalRepository.existsByCustomerIdAndStatusIn(
+                id,
+                List.of(
+                        RentalStatus.ATIVA,
+                        RentalStatus.ATRASADA,
+                        RentalStatus.NAO_INICIADA
+                )
+        );
+
+        if (possuiLocacoesAtivas) {
+            throw new IllegalStateException("Cliente possui locações ativas/atrasadas e não pode ser excluído.");
         }
 
-        repository.delete(existing);
+        // ⚠️ ANONIMIZAÇÃO – mantém histórico, apaga dados pessoais
+        existing.setNome("Cliente Removido");
+        existing.setEmail("anon" + existing.getId() + "@cliente-removido.com");
+        existing.setTelefone(null);
+        existing.setCpf(null);
+        existing.setCnh(null);
+        existing.setAtivo(false);
+
+        repository.save(existing);
     }
+
+    public void desativar(Long id) {
+        Customer existing = findByIdOrThrow(id);
+
+        boolean possuiLocacoesAtivas = rentalRepository.existsByCustomerIdAndStatusIn(
+                id,
+                List.of(RentalStatus.ATIVA, RentalStatus.ATRASADA)
+        );
+
+        if (possuiLocacoesAtivas) {
+            throw new IllegalStateException("Cliente possui locações ativas/atrasadas e não pode ser desativado.");
+        }
+
+        existing.setAtivo(false);
+        repository.save(existing);
+    }
+
+
 
     private Customer findByIdOrThrow(Long id){
         return repository.findById(id)
@@ -176,5 +211,14 @@ public class CustomerService {
             }
         }
     }
+
+    public List<Customer> getAllAtivos() {
+        return repository.findAllByAtivoTrue();
+    }
+
+    public List<Customer> getByNameAtivos(String nome) {
+        return repository.findByNomeContainingIgnoreCaseAndAtivoTrue(nome);
+    }
+
 
 }

@@ -71,4 +71,21 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
             );
 
 
+    @Query("""
+        SELECT COUNT(r) > 0 FROM Rental r
+        WHERE r.customer.id = :customerId
+        AND r.status IN (:status)
+    """)
+    boolean existsByCustomerIdAndStatusIn(
+            @Param("customerId") Long customerId,
+            @Param("status") List<RentalStatus> status
+    );
+
+    @Query("""
+    SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+    FROM Rental r
+    WHERE r.customer.id = :customerId
+    AND r.status <> com.nozama.aluguel_veiculos.domain.enums.RentalStatus.DEVOLVIDA
+""")
+    boolean existsActiveRentals(Long customerId);
 }

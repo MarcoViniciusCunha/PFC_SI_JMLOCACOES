@@ -26,7 +26,7 @@ public class CustomerController {
 
     @GetMapping
     public ResponseEntity<List<CustomerResponse>> getAll(){
-        var list = service.getAll().stream()
+        var list = service.getAllAtivos().stream()  // ⬅️ agora só lista clientes ativos
                 .map(CustomerResponse::from)
                 .toList();
         return ResponseEntity.ok(list);
@@ -34,7 +34,7 @@ public class CustomerController {
 
     @GetMapping("/search")
     public ResponseEntity<List<CustomerResponse>> getByName(@RequestParam String nome){
-        var list = service.getByName(nome).stream()
+        var list = service.getByNameAtivos(nome).stream()
                 .map(CustomerResponse::from)
                 .toList();
         return ResponseEntity.ok(list);
@@ -46,13 +46,22 @@ public class CustomerController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<CustomerResponse> update(@PathVariable Long id,@RequestBody CustomerRequest.update request){
+    public ResponseEntity<CustomerResponse> update(@PathVariable Long id,
+                                                   @RequestBody CustomerRequest.update request){
         return ResponseEntity.ok(CustomerResponse.from(service.update(id, request)));
     }
 
+    // 🔥 Excluir agora anonimiza e não remove do banco
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         service.delete(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ✨ Novidade: Desativar cliente
+    @PatchMapping("/{id}/desativar")
+    public ResponseEntity<Void> desativar(@PathVariable Long id){
+        service.desativar(id);
         return ResponseEntity.ok().build();
     }
 }

@@ -54,6 +54,10 @@ public class Customer {
 
     private LocalDate data_nasc;
 
+    @Column(nullable = false)
+    private boolean ativo = true;
+
+
     public Customer(CustomerRequest request) {
         String cleanCpf = cleanNumber(request.cpf());
         String cleanCnh = cleanNumber(request.cnh());
