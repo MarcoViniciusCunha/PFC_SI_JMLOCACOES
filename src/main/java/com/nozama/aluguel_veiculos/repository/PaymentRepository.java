@@ -1,6 +1,7 @@
 package com.nozama.aluguel_veiculos.repository;
 
 import com.nozama.aluguel_veiculos.domain.Payment;
+import com.nozama.aluguel_veiculos.domain.enums.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,5 +30,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             @Param("placaVeiculo") String placa,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END
+    FROM Payment p
+    WHERE p.rental.customer.id = :customerId
+    AND p.status = com.nozama.aluguel_veiculos.domain.enums.PaymentStatus.PENDENTE
+""")
+    boolean existsPendentesByCustomerId(@Param("customerId") Long customerId);
+
+
 
 }

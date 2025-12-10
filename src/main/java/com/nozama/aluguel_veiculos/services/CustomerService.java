@@ -1,9 +1,11 @@
 package com.nozama.aluguel_veiculos.services;
 
 import com.nozama.aluguel_veiculos.domain.Customer;
+import com.nozama.aluguel_veiculos.domain.enums.PaymentStatus;
 import com.nozama.aluguel_veiculos.domain.enums.RentalStatus;
 import com.nozama.aluguel_veiculos.dto.CustomerRequest;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
+import com.nozama.aluguel_veiculos.repository.PaymentRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.utils.HashUtils;
 import lombok.RequiredArgsConstructor;
@@ -23,43 +25,46 @@ public class CustomerService {
     private final CustomerRepository repository;
     private final CepService cepService;
     private final RentalRepository rentalRepository;
+    private final PaymentRepository paymentRepository;
 
-    public Customer create(CustomerRequest request){
+    // -------------------- MÉTODOS PÚBLICOS --------------------
 
+    public Customer create(CustomerRequest request) {
         String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
         repository.findByCpfHash(cpfHash).ifPresent(c -> {
             throw new DataIntegrityViolationException("CPF já cadastrado");
         });
 
         Customer customer = new Customer(request);
+
         if (request.rua() == null || request.rua().isBlank()) {
             fillAddress(customer, request.cep());
         }
 
         try {
             return repository.save(customer);
-        } catch (DataIntegrityViolationException e){
-            throw new RuntimeException("CNH, CPF ou email já cadastrado! ");
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("CNH, CPF ou email já cadastrado!");
         }
     }
 
-    public List<Customer> getAll(){
+    public List<Customer> getAll() {
         return repository.findAll();
     }
 
-    public Customer getById(Long id){
+    public Customer getById(Long id) {
         return findByIdOrThrow(id);
     }
 
-    public List<Customer> getByName(String nome){
-       List<Customer> customers = repository.findByNomeContainingIgnoreCase(nome);
-       if (customers.isEmpty()){
-           throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não existe cliente com esse nome.");
-       }
-       return customers;
+    public List<Customer> getByName(String nome) {
+        List<Customer> customers = repository.findByNomeContainingIgnoreCase(nome);
+        if (customers.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não existe cliente com esse nome.");
+        }
+        return customers;
     }
 
-    public Customer update(Long id, CustomerRequest.update request){
+    public Customer update(Long id, CustomerRequest.update request) {
         Customer existing = findByIdOrThrow(id);
 
         if (request.cpf() != null) {
@@ -78,6 +83,7 @@ public class CustomerService {
             });
             existing.setCpf(cleanCpf);
         }
+
         if (request.cnh() != null) {
             if (request.cnh().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH não pode ser vazia");
@@ -90,7 +96,6 @@ public class CustomerService {
         } else if (existing.getCnh() == null || existing.getCnh().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNH não pode ser nula");
         }
-
 
         if (request.nome() != null) {
             if (request.nome().isBlank()) {
@@ -124,7 +129,6 @@ public class CustomerService {
             if (request.cep().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP não pode ser vazio");
             }
-
             existing.setCep(request.cep());
             fillAddress(existing, request.cep());
         }
@@ -143,43 +147,43 @@ public class CustomerService {
         return repository.save(existing);
     }
 
+
+
     public void delete(Long id) {
         Customer existing = findByIdOrThrow(id);
 
-        boolean possuiLocacoesAtivas = rentalRepository.existsByCustomerIdAndStatusIn(
-                id,
-                List.of(
-                        RentalStatus.ATIVA,
-                        RentalStatus.ATRASADA,
-                        RentalStatus.NAO_INICIADA
-                )
-        );
-
-        if (possuiLocacoesAtivas) {
-            throw new IllegalStateException("Cliente possui locações ativas/atrasadas e não pode ser excluído.");
+        if (possuiLocacoesAtivas(id)) {
+            throw new IllegalStateException("Cliente possui locações ativas/atrasadas/não iniciadas e não pode ser excluído.");
         }
 
-        // ⚠️ ANONIMIZAÇÃO – mantém histórico, apaga dados pessoais
+        if (possuiLocacoesNaoPagas(id)) {
+            throw new IllegalStateException("Cliente possui locações devolvidas não pagas ou pagamentos pendentes e não pode ser excluído.");
+        }
+
         existing.setNome("Cliente Removido");
         existing.setEmail("anon" + existing.getId() + "@cliente-removido.com");
-        existing.setTelefone(null);
-        existing.setCpf(null);
+        existing.setTelefone("");
         existing.setCnh(null);
+        existing.setRua("");
+        existing.setCep("");
+        existing.setNumero("");
+        existing.setEstado("");
         existing.setAtivo(false);
 
         repository.save(existing);
     }
+
+
 
     public void desativar(Long id) {
         Customer existing = findByIdOrThrow(id);
 
-        boolean possuiLocacoesAtivas = rentalRepository.existsByCustomerIdAndStatusIn(
-                id,
-                List.of(RentalStatus.ATIVA, RentalStatus.ATRASADA)
-        );
+        if (possuiLocacoesAtivas(id)) {
+            throw new IllegalStateException("Cliente possui locações ativas/atrasadas/não iniciadas.");
+        }
 
-        if (possuiLocacoesAtivas) {
-            throw new IllegalStateException("Cliente possui locações ativas/atrasadas e não pode ser desativado.");
+        if (possuiLocacoesNaoPagas(id)) {
+            throw new IllegalStateException("Cliente possui locações devolvidas não pagas ou pagamentos pendentes.");
         }
 
         existing.setAtivo(false);
@@ -187,17 +191,24 @@ public class CustomerService {
     }
 
 
+    public void ativar(Long id) {
+        Customer existing = findByIdOrThrow(id);
+        if (existing.isAtivo()) return;
+        existing.setAtivo(true);
+        repository.save(existing);
+    }
 
-    private Customer findByIdOrThrow(Long id){
+    // -------------------- MÉTODOS AUXILIARES --------------------
+    private Customer findByIdOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
     }
 
-    private void fillAddress(Customer customer, String cep){
-        if(cep != null && !cep.isEmpty()){
+    private void fillAddress(Customer customer, String cep) {
+        if (cep != null && !cep.isEmpty()) {
             try {
                 Map<String, Object> endereco = cepService.buscarEndereco(cep);
-                if(endereco.containsKey("erro")){
+                if (endereco.containsKey("erro")) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CEP inválido");
                 }
                 customer.setRua((String) endereco.get("logradouro"));
@@ -219,5 +230,21 @@ public class CustomerService {
         return repository.findByNomeContainingIgnoreCaseAndAtivoTrue(nome);
     }
 
+    public List<Customer> getAllPrincipal() {
+        return repository.findAllByOrderByAtivoDescNomeAsc();
+    }
 
+    // -------------------- MÉTODOS DE VERIFICAÇÃO --------------------
+
+
+    private boolean possuiLocacoesAtivas(Long customerId) {
+        return rentalRepository.existsByCustomerIdAndStatusIn(
+                customerId,
+                List.of(RentalStatus.ATIVA, RentalStatus.ATRASADA, RentalStatus.NAO_INICIADA)
+        );
+    }
+
+    private boolean possuiLocacoesNaoPagas(Long customerId) {
+        return rentalRepository.existsDevolvidasNaoPagas(customerId);
+    }
 }

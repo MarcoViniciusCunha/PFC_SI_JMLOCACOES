@@ -15,7 +15,7 @@ public record CustomerResponse(
         String cep,
         String numero,
         String data_nasc,
-        boolean ativo   // 👈 novo campo
+        boolean ativo
 ) {
     public static CustomerResponse from(Customer c){
         return new CustomerResponse(
