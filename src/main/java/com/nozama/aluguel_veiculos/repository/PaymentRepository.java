@@ -1,6 +1,7 @@
 package com.nozama.aluguel_veiculos.repository;
 
 import com.nozama.aluguel_veiculos.domain.Payment;
+import com.nozama.aluguel_veiculos.domain.enums.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,7 +25,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findByFilters(
             @Param("data") LocalDate data,
             @Param("formaPagto") String formaPagto,
-            @Param("status") String status,
+            @Param("status") PaymentStatus status,
             @Param("customerId") Long customerId,
             @Param("placaVeiculo") String placa,
             Pageable pageable

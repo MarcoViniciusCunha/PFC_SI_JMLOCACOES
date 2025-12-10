@@ -5,6 +5,7 @@ import com.nozama.aluguel_veiculos.dto.PaymentRequest;
 import com.nozama.aluguel_veiculos.dto.PaymentResponse;
 import com.nozama.aluguel_veiculos.repository.PaymentRepository;
 import com.nozama.aluguel_veiculos.services.PaymentService;
+import com.nozama.aluguel_veiculos.services.PdfService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentController {
 
+    private final PdfService pdfService;
     private final PaymentRepository repository;
     private final PaymentService service;
 
@@ -61,7 +66,6 @@ public class PaymentController {
         );
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         service.delete(id);
@@ -74,4 +78,18 @@ public class PaymentController {
         Payment updatedPayment = service.update(payment, request);
         return ResponseEntity.ok().body(PaymentResponse.fromEntity(updatedPayment));
     }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> gerarPdfPagamento(@PathVariable Long id) {
+        Payment pagamento = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pagamento não encontrado"));
+
+        byte[] pdf = pdfService.gerarComprovantePagamento(pagamento);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=comprovante_pagamento.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
 }

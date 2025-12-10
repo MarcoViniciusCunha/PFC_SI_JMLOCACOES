@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     WHERE r.vehicle = :vehicle
       AND r.endDate >= :start
       AND r.startDate <= :end
+      AND r.returned = false
 """)
     boolean existsActiveConflict(@Param("vehicle") Vehicle vehicle,
                                  @Param("start") LocalDate start,
@@ -70,5 +72,14 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
             @Param("data_multa")LocalDate data_multa
             );
 
+    @Query("""
+    SELECT r FROM Rental r
+    WHERE r.vehicle.placa = :placa
+      AND DATE(:momento) BETWEEN r.startDate AND COALESCE(r.returnDate, r.endDate)
+""")
+    Optional<Rental> findRentalByVehiclePlateAndDateTime(
+            @Param("placa") String placa,
+            @Param("momento") LocalDateTime momento
+    );
 
 }

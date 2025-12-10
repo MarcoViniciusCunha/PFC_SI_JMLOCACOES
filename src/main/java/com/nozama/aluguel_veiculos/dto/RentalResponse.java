@@ -24,7 +24,8 @@ public record RentalResponse(
         String status,
         List<FineResponse> fines,
         List<InspectionResponse> inspections,
-        List<PaymentResponse> payments
+        List<PaymentResponse> payments,
+        List<TollResponse> tolls
 ) {
 
     public static RentalResponse fromEntity(Rental rental) {
@@ -39,6 +40,10 @@ public record RentalResponse(
 
         List<PaymentResponse> paymentResponses  = rental.getPayments().stream()
                 .map(PaymentResponse::fromEntitySummary)
+                .toList();
+
+        List<TollResponse> tollResponses = rental.getTolls().stream()
+                .map(TollResponse::fromEntitySummary)
                 .toList();
 
         return new RentalResponse(
@@ -57,7 +62,8 @@ public record RentalResponse(
                 rental.getStatus().getDisplayName(),
                 fineResponses,
                 getInspections,
-                paymentResponses
+                paymentResponses,
+                tollResponses
         );
     }
 
@@ -76,9 +82,10 @@ public record RentalResponse(
                 rental.getPrice(),
                 rental.isReturned(),
                 rental.getStatus().getDisplayName(),
-                null, // fines
-                null, // inspections
-                null  // payments
+                null,
+                null,
+                null,
+                null
         );
     }
 
