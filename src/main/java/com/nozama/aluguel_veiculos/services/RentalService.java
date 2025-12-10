@@ -11,7 +11,6 @@ import com.nozama.aluguel_veiculos.dto.RentalDashboardResponse;
 import com.nozama.aluguel_veiculos.dto.RentalRequest;
 import com.nozama.aluguel_veiculos.dto.RentalResponse;
 import com.nozama.aluguel_veiculos.repository.CustomerRepository;
-import com.nozama.aluguel_veiculos.repository.PaymentRepository;
 import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
 import jakarta.transaction.Transactional;
@@ -38,7 +37,6 @@ public class RentalService {
     private final VehicleRepository vehicleRepository;
     private final CustomerRepository customerRepository;
     private final VehicleService vehicleService;
-    private final PaymentService paymentService;
 
     @Transactional
     public Rental create(RentalRequest request) {
@@ -85,15 +83,10 @@ public class RentalService {
         rental.setStatus(RentalStatus.DEVOLVIDA);
 
         Vehicle vehicle = rental.getVehicle();
-        vehicle.setStatus(VehicleStatus.DISPONIVEL);
-        vehicleRepository.save(vehicle);
+        vehicleService.atualizarStatusDoVeiculo(vehicle);
 
-        rentalRepository.save(rental);
-        Payment pagamentoExtra = paymentService.gerarPagamentoAposDevolucao(rental);
-        if (pagamentoExtra != null) {
-            System.out.println("Pagamento extra gerado: " + pagamentoExtra.getValor());
-        }
-        return rental;
+        vehicleRepository.save(vehicle);
+        return rentalRepository.save(rental);
     }
 
     @Transactional
@@ -277,17 +270,8 @@ public class RentalService {
     }
 
     private void validateDates(LocalDate start, LocalDate end) {
-        if (start.isBefore(LocalDate.now())) {
-            throwBadRequest("A data de início não pode estar no passado.");
-        }
-
-        if (end.isBefore(LocalDate.now())) {
-            throwBadRequest("A data de término não pode estar no passado.");
-        }
-
-        if (!end.isAfter(start)) {
+        if (!end.isAfter(start))
             throwBadRequest("Data final deve ser posterior à inicial.");
-        }
     }
 
     private void validateRentalEditable(Rental rental) {
