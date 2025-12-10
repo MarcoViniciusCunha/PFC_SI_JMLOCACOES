@@ -53,6 +53,9 @@ public class Rental {
     @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Payment> payments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "rental", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Toll> tolls = new ArrayList<>();
+
     public Rental(Vehicle vehicle, Customer customer, RentalRequest request){
         this.vehicle = vehicle;
         this.customer = customer;

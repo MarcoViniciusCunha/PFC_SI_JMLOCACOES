@@ -25,7 +25,6 @@ public class EncryptExistingCustomers {
 
         for (Customer c : customers) {
 
-            // CPF
             if (c.getCpf() != null) {
                 try {
                     // tentar descriptografar

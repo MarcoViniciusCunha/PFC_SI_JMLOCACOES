@@ -25,7 +25,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findByFilters(
             @Param("data") LocalDate data,
             @Param("formaPagto") String formaPagto,
-            @Param("status") String status,
+            @Param("status") PaymentStatus status,
             @Param("customerId") Long customerId,
             @Param("placaVeiculo") String placa,
             Pageable pageable

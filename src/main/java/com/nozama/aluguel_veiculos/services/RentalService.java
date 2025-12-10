@@ -270,17 +270,6 @@ public class RentalService {
     }
 
     private void validateDates(LocalDate start, LocalDate end) {
-        if (start.isBefore(LocalDate.now())) {
-            throwBadRequest("A data de início não pode estar no passado.");
-        }
-
-        if (end.isBefore(LocalDate.now())) {
-            throwBadRequest("A data de término não pode estar no passado.");
-        }
-
-        if (!end.isAfter(start)) {
-            throwBadRequest("Data final deve ser posterior à inicial.");
-        }
         if (!end.isAfter(start))
             throwBadRequest("Data final deve ser posterior à inicial.");
     }
