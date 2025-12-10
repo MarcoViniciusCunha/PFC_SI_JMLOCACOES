@@ -27,9 +27,6 @@ public class SecurityConfig {
     @Value("${cors.allowed-origin}")
     private String allowedOrigin;
 
-    @Value("${cors.allowed-origin}")
-    private String allowedOrigin;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
