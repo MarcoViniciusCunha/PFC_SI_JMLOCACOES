@@ -27,8 +27,6 @@ public class CustomerService {
     private final RentalRepository rentalRepository;
     private final PaymentRepository paymentRepository;
 
-    // -------------------- MÉTODOS PÚBLICOS --------------------
-
     public Customer create(CustomerRequest request) {
         String cpfHash = HashUtils.hmacSha256Base64(request.cpf());
         repository.findByCpfHash(cpfHash).ifPresent(c -> {
@@ -160,10 +158,9 @@ public class CustomerService {
             throw new IllegalStateException("Cliente possui locações devolvidas não pagas ou pagamentos pendentes e não pode ser excluído.");
         }
 
-        existing.setNome("Cliente Removido");
+        existing.setNome("");
         existing.setEmail("anon" + existing.getId() + "@cliente-removido.com");
         existing.setTelefone("");
-        existing.setCnh(null);
         existing.setRua("");
         existing.setCep("");
         existing.setNumero("");
@@ -198,10 +195,13 @@ public class CustomerService {
         repository.save(existing);
     }
 
-    // -------------------- MÉTODOS AUXILIARES --------------------
     private Customer findByIdOrThrow(Long id) {
-        return repository.findById(id)
+        Customer customer =  repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+        if ("Cliente Removido".equals(customer.getNome())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não existe.");
+        }
+        return customer;
     }
 
     private void fillAddress(Customer customer, String cep) {
@@ -233,8 +233,6 @@ public class CustomerService {
     public List<Customer> getAllPrincipal() {
         return repository.findAllByOrderByAtivoDescNomeAsc();
     }
-
-    // -------------------- MÉTODOS DE VERIFICAÇÃO --------------------
 
 
     private boolean possuiLocacoesAtivas(Long customerId) {

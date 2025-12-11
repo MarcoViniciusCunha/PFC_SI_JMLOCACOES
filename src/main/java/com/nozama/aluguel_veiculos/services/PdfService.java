@@ -23,6 +23,10 @@ public class PdfService {
     private static final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public byte[] gerarContrato(Rental rental) {
+        if (rental.getCustomer().getNome() == null || rental.getCustomer().getNome().trim().isEmpty()) {
+            throw new IllegalArgumentException("Não é possível gerar contrato pois o cliente foi deletado");
+        }
+
         try (PDDocument document = new PDDocument()) {
 
             PDPage page = new PDPage();

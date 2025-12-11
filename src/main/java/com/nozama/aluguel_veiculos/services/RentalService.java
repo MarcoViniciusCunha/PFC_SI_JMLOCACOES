@@ -15,7 +15,6 @@ import com.nozama.aluguel_veiculos.repository.RentalRepository;
 import com.nozama.aluguel_veiculos.repository.VehicleRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -26,8 +25,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +39,7 @@ public class RentalService {
     private final VehicleRepository vehicleRepository;
     private final CustomerRepository customerRepository;
     private final VehicleService vehicleService;
+    private final PaymentService paymentService;
 
     @Transactional
     public Rental create(RentalRequest request) {
@@ -83,10 +86,15 @@ public class RentalService {
         rental.setStatus(RentalStatus.DEVOLVIDA);
 
         Vehicle vehicle = rental.getVehicle();
-        vehicleService.atualizarStatusDoVeiculo(vehicle);
-
+        vehicle.setStatus(VehicleStatus.DISPONIVEL);
         vehicleRepository.save(vehicle);
-        return rentalRepository.save(rental);
+
+        rentalRepository.save(rental);
+        Payment pagamentoExtra = paymentService.gerarPagamentoAposDevolucao(rental);
+        if (pagamentoExtra != null) {
+            System.out.println("Pagamento extra gerado: " + pagamentoExtra.getValor());
+        }
+        return rental;
     }
 
     @Transactional
@@ -167,17 +175,30 @@ public class RentalService {
                 .filter(r -> r.getStatus() == RentalStatus.ATRASADA)
                 .count();
 
-        RentalResponse proximaDevolucao = rentals.stream()
+// Próximas devoluções
+        List<RentalResponse> proximaDevolucao = rentals.stream()
                 .filter(r -> r.getStatus() == RentalStatus.ATIVA)
-                .min(Comparator.comparing(Rental::getEndDate))
+                .filter(r -> r.getEndDate() != null && !r.getEndDate().isBefore(today)) // hoje ou depois
+                .collect(Collectors.groupingBy(Rental::getEndDate))
+                .entrySet().stream()
+                .min(Map.Entry.comparingByKey()) // pega a menor data
+                .map(Map.Entry::getValue)
+                .orElse(Collections.emptyList())
+                .stream()
                 .map(RentalResponse::fromEntity)
-                .orElse(null);
+                .toList();
 
-        RentalResponse proximaLocacao = rentals.stream()
-                .filter(r -> r.getStartDate() != null && r.getStartDate().isAfter(today))
-                .min(Comparator.comparing(Rental::getStartDate))
+// Próximas locações
+        List<RentalResponse> proximaLocacao = rentals.stream()
+                .filter(r -> r.getStartDate() != null && !r.getStartDate().isBefore(today)) // hoje ou depois
+                .collect(Collectors.groupingBy(Rental::getStartDate))
+                .entrySet().stream()
+                .min(Map.Entry.comparingByKey()) // pega a menor data
+                .map(Map.Entry::getValue)
+                .orElse(Collections.emptyList())
+                .stream()
                 .map(RentalResponse::fromEntity)
-                .orElse(null);
+                .toList();
 
         return new RentalDashboardResponse(
                 faturamentoMes,
@@ -188,9 +209,16 @@ public class RentalService {
         );
     }
 
-    public Page<RentalResponse> listRentals(Long customerId, String placa, String status, Pageable pageable) {
-        RentalStatus statusEnum = null;
+    public Page<RentalResponse> listRentals(
+            Long customerId,
+            String placa,
+            String status,
+            Boolean aVencer,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
 
+        RentalStatus statusEnum = null;
         if (status != null && !status.isBlank()) {
             try {
                 statusEnum = RentalStatus.fromString(status);
@@ -199,15 +227,20 @@ public class RentalService {
             }
         }
 
-        Page<Rental> rentals = rentalRepository.findByFilters(customerId, placa, statusEnum, pageable);
+        LocalDate today = LocalDate.now();
+        if (Boolean.TRUE.equals(aVencer)) {
+            if (startDate == null) startDate = today;
+        }
+
+        Page<Rental> rentals = rentalRepository.findByFilters(
+                customerId, placa, statusEnum, startDate, endDate, pageable
+        );
 
         rentals.forEach(Rental::updateStatus);
         rentalRepository.saveAll(rentals.getContent());
 
         return rentals.map(RentalResponse::fromEntityBasic);
     }
-
-
 
     public List<RentalResponse> findRentalByStatus(String status) {
         RentalStatus statusEnum;
@@ -270,8 +303,17 @@ public class RentalService {
     }
 
     private void validateDates(LocalDate start, LocalDate end) {
-        if (!end.isAfter(start))
+        if (start.isBefore(LocalDate.now())) {
+            throwBadRequest("A data de início não pode estar no passado.");
+        }
+
+        if (end.isBefore(LocalDate.now())) {
+            throwBadRequest("A data de término não pode estar no passado.");
+        }
+
+        if (!end.isAfter(start)) {
             throwBadRequest("Data final deve ser posterior à inicial.");
+        }
     }
 
     private void validateRentalEditable(Rental rental) {
