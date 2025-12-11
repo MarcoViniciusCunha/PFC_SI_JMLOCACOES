@@ -1,0 +1,9 @@
+CREATE TABLE toll (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    rodovia VARCHAR(255) NOT NULL,
+    cidade VARCHAR(255) NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    date DATETIME NOT NULL,
+    rental_id BIGINT NOT NULL,
+    FOREIGN KEY (rental_id) REFERENCES rental(id)
+);

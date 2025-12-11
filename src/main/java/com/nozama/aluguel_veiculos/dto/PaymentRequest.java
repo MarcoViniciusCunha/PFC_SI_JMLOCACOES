@@ -15,8 +15,6 @@ public record PaymentRequest(
         @NotBlank(message = "Insira a forma de pagamento")
         String formaPagto,
 
-        @NotBlank(message = "Insira o status")
-        @Pattern(regexp = "PAGO|PENDENTE|CANCELADO", message = "Status inválido")
         String status,
 
         Integer parcelas,

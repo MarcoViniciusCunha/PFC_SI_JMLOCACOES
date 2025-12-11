@@ -27,51 +27,51 @@ public class PaymentService {
     public Payment create(PaymentRequest request) {
         Rental rental = findRental(request.rentalId());
 
-        var payments = paymentRepository.findByRentalId(rental.getId());
+        BigDecimal valorInicial = rental.getPrice();
 
-        BigDecimal juros = request.juros() != null ? request.juros() : BigDecimal.ZERO;
+        Payment pagamento = new Payment(rental, request);
+        pagamento.setValor(valorInicial);
+        pagamento.setStatus(PaymentStatus.PAGO);
+        pagamento.setFormaPagto(request.formaPagto());
+        pagamento.setParcelas(request.parcelas());
+        pagamento.setData_pagamento(request.dataPagamento());
 
-        BigDecimal valorTotalAtual = calcularValorTotalComJurosETaxa(rental, juros, request.dataPagamento());
+        return paymentRepository.save(pagamento);
+    }
 
-        BigDecimal valorPago = payments.stream()
+    public Payment gerarPagamentoAposDevolucao(Rental rental) {
+        BigDecimal valorTotalFinal = calcularValorTotalComJurosETaxa(rental, BigDecimal.ZERO, rental.getReturnDate());
+
+        BigDecimal totalTolls = rental.getTolls().stream()
+                .map(t -> t.getValor())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalFines = rental.getFines().stream()
+                .map(f -> f.getValor())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        valorTotalFinal = valorTotalFinal.add(totalTolls).add(totalFines);
+
+        BigDecimal totalPago = paymentRepository.findByRentalId(rental.getId())
+                .stream()
                 .filter(p -> p.getStatus() == PaymentStatus.PAGO)
                 .map(Payment::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        var pagamentoBase = payments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.PAGO)
-                .findFirst();
+        BigDecimal diferenca = valorTotalFinal.subtract(totalPago);
 
-        var pagamentoPendente = payments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.PENDENTE)
-                .findFirst();
-
-        if (valorPago.compareTo(valorTotalAtual) >= 0 && pagamentoPendente.isEmpty()) {
-            throw new RuntimeException("Todas as pendências desta locação já foram pagas.");
+        if (diferenca.compareTo(BigDecimal.ZERO) <= 0) {
+            return null;
         }
 
-        pagamentoPendente.ifPresent(paymentRepository::delete);
+        Payment pagamentoExtra = new Payment();
+        pagamentoExtra.setRental(rental);
+        pagamentoExtra.setValor(diferenca);
+        pagamentoExtra.setStatus(PaymentStatus.PENDENTE);
+        pagamentoExtra.setData_pagamento(LocalDate.now());
+        pagamentoExtra.setFormaPagto("A DEFINIR");
 
-        Payment novoPagamento = new Payment(rental, request);
-
-        BigDecimal valorCalculado = valorTotalAtual;
-
-        if (pagamentoBase.isPresent()) {
-            BigDecimal valorBase = pagamentoBase.get().getValor();
-            valorCalculado = valorCalculado.subtract(valorBase);
-
-            if (valorCalculado.compareTo(BigDecimal.ZERO) < 0) {
-                valorCalculado = BigDecimal.ZERO;
-            }
-        }
-
-        novoPagamento.setValor(valorCalculado);
-        novoPagamento.setStatus(PaymentStatus.fromString(request.status()));
-        novoPagamento.setFormaPagto(request.formaPagto());
-        novoPagamento.setParcelas(request.parcelas());
-        novoPagamento.setData_pagamento(request.dataPagamento());
-
-        return paymentRepository.save(novoPagamento);
+        return paymentRepository.save(pagamentoExtra);
     }
 
     public List<Payment> findAll(){
@@ -86,19 +86,12 @@ public class PaymentService {
             String placa,
             Pageable pageable
     ) {
-        String normalizedStatus = status == null ? "" : status.toUpperCase();
-
-        Page<Payment> payments;
-
-        switch (normalizedStatus) {
-            case "PAGO" ->
-                    payments = paymentRepository.findByFilters(data, formaPagto, "PAGO", customerId, placa, pageable);
-            case "PENDENTE" ->
-                    payments = paymentRepository.findByFilters(data, formaPagto, "PENDENTE", customerId, placa, pageable);
-            default ->
-                    payments = paymentRepository.findByFilters(data, formaPagto, null, customerId, placa, pageable);
+        PaymentStatus statusEnum = null;
+        if (status != null && !status.isBlank()) {
+            statusEnum = PaymentStatus.fromString(status);
         }
 
+        Page<Payment> payments = paymentRepository.findByFilters(data, formaPagto, statusEnum, customerId, placa, pageable);
         return payments.map(PaymentResponse::fromEntity);
     }
 

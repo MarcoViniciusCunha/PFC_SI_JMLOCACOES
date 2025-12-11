@@ -12,6 +12,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByEmail(String email);
     List<Customer> findAllByAtivoTrue();
     List<Customer> findByNomeContainingIgnoreCaseAndAtivoTrue(String nome);
+    List<Customer> findAllByOrderByAtivoDescNomeAsc();
 
 
 }

@@ -19,49 +19,69 @@ public class CustomerController {
     private final CustomerService service;
 
     @PostMapping
-    public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request){
+    public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request) {
         Customer c = service.create(request);
         return ResponseEntity.ok(CustomerResponse.from(c));
     }
 
+    // Listar todos clientes ativos
     @GetMapping
-    public ResponseEntity<List<CustomerResponse>> getAll(){
-        var list = service.getAllAtivos().stream()  // ⬅️ agora só lista clientes ativos
+    public ResponseEntity<List<CustomerResponse>> getAll() {
+        var list = service.getAllAtivos().stream()
                 .map(CustomerResponse::from)
                 .toList();
         return ResponseEntity.ok(list);
     }
 
+    // Listar todos clientes ordenados (ativos e inativos)
+    @GetMapping("/all-ordered")
+    public ResponseEntity<List<CustomerResponse>> getAllOrdered() {
+        var list = service.getAllPrincipal().stream()
+                .map(CustomerResponse::from)
+                .toList();
+        return ResponseEntity.ok(list);
+    }
+
+    // Buscar clientes ativos pelo nome
     @GetMapping("/search")
-    public ResponseEntity<List<CustomerResponse>> getByName(@RequestParam String nome){
+    public ResponseEntity<List<CustomerResponse>> getByName(@RequestParam String nome) {
         var list = service.getByNameAtivos(nome).stream()
                 .map(CustomerResponse::from)
                 .toList();
         return ResponseEntity.ok(list);
     }
 
+    // Buscar cliente por ID
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerResponse> getById(@PathVariable Long id){
+    public ResponseEntity<CustomerResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(CustomerResponse.from(service.getById(id)));
     }
 
+    // Atualizar cliente
     @PatchMapping("/{id}")
     public ResponseEntity<CustomerResponse> update(@PathVariable Long id,
-                                                   @RequestBody CustomerRequest.update request){
+                                                   @RequestBody CustomerRequest.update request) {
         return ResponseEntity.ok(CustomerResponse.from(service.update(id, request)));
     }
 
-    // 🔥 Excluir agora anonimiza e não remove do banco
+    // Excluir cliente (anônimo)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.ok().build();
     }
 
-    // ✨ Novidade: Desativar cliente
+    // Desativar cliente
     @PatchMapping("/{id}/desativar")
-    public ResponseEntity<Void> desativar(@PathVariable Long id){
+    public ResponseEntity<Void> desativar(@PathVariable Long id) {
         service.desativar(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Ativar cliente
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<Void> ativar(@PathVariable Long id) {
+        service.ativar(id);
         return ResponseEntity.ok().build();
     }
 }
