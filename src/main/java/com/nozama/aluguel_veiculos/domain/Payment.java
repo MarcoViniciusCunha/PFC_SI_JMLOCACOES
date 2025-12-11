@@ -46,7 +46,7 @@ public class Payment {
         this.data_pagamento = request.dataPagamento();
         this.valor = rental.getPrice();
         this.formaPagto = request.formaPagto();
-        this.status = PaymentStatus.fromString(request.status());
+        this.status = request.status() != null ? PaymentStatus.fromString(request.status()) : PaymentStatus.PENDENTE;
         this.parcelas = request.parcelas();
         this.descricao = request.descricao();
     }

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 
-//@Component
+@Component
 public class EncryptExistingCustomers {
     private final CustomerRepository repo;
     private final CryptoConverter cryptoConverter = new CryptoConverter();
@@ -25,7 +25,6 @@ public class EncryptExistingCustomers {
 
         for (Customer c : customers) {
 
-            // CPF
             if (c.getCpf() != null) {
                 try {
                     // tentar descriptografar

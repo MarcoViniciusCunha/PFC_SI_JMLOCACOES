@@ -10,5 +10,9 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     List<Customer> findByNomeContainingIgnoreCase(String nome);
     Optional<Customer> findByCpfHash(String cpfHash);
     Optional<Customer> findByEmail(String email);
+    List<Customer> findAllByAtivoTrue();
+    List<Customer> findByNomeContainingIgnoreCaseAndAtivoTrue(String nome);
+    List<Customer> findAllByOrderByAtivoDescNomeAsc();
+
 
 }

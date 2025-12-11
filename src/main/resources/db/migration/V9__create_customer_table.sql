@@ -19,6 +19,8 @@ CREATE TABLE customer (
     CONSTRAINT uk_customer_email UNIQUE (email)
 );
 
+ALTER TABLE customer ADD COLUMN ativo BOOLEAN NOT NULL DEFAULT TRUE;
+
 SET NAMES 'utf8mb4';
 
 INSERT INTO customer (cnh, nome, cpf, email, telefone, cep, numero, rua, cidade, estado, data_nasc) VALUES ('93103413164','Vitor Moreira Souza','781.618.495-60','vitor.moreira.souza7429@exemplo.com.br','(62)96977-3664','55341928','2987','Travessa do Mercado','Belo Horizonte','MG','1997-05-14');

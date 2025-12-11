@@ -9,9 +9,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -53,13 +55,20 @@ public class RentalController {
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<Page<RentalResponse>> filter (
+    public ResponseEntity<Page<RentalResponse>> filter(
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) String placa,
             @RequestParam(required = false) String status,
-            Pageable pageable){
-        return ResponseEntity.ok(service.listRentals(customerId, placa, status, pageable));
+            @RequestParam(required = false) Boolean aVencer,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Pageable pageable) {
+
+        return ResponseEntity.ok(
+                service.listRentals(customerId, placa, status, aVencer, startDate, endDate, pageable)
+        );
     }
+
 
     @GetMapping("/dashboard/info")
     public RentalDashboardResponse getRentalDashboard() {

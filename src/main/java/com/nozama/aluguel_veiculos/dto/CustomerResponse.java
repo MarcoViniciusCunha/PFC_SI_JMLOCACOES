@@ -14,7 +14,8 @@ public record CustomerResponse(
         String estado,
         String cep,
         String numero,
-        String data_nasc
+        String data_nasc,
+        boolean ativo
 ) {
     public static CustomerResponse from(Customer c){
         return new CustomerResponse(
@@ -29,23 +30,20 @@ public record CustomerResponse(
                 c.getEstado(),
                 c.getCep(),
                 c.getNumero(),
-                c.getData_nasc() != null ? c.getData_nasc().toString() : null
+                c.getData_nasc() != null ? c.getData_nasc().toString() : null,
+                c.isAtivo()
         );
     }
 
     private static String maskCpf(String cpf) {
         if (cpf == null) return null;
-
         cpf = cpf.replaceAll("\\D", "");
-
         if (cpf.length() != 11) return cpf;
 
         String middle = cpf.substring(6, 9);
         String last = cpf.substring(9);
-
         return "***.***." + middle + "-" + last;
     }
-
 
     public static String maskCnh(String cnh){
         if(cnh == null || cnh.length() < 4) return null;

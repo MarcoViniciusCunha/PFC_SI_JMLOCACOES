@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     WHERE r.vehicle = :vehicle
       AND r.endDate >= :start
       AND r.startDate <= :end
+      AND r.returned = false
 """)
     boolean existsActiveConflict(@Param("vehicle") Vehicle vehicle,
                                  @Param("start") LocalDate start,
@@ -44,15 +46,19 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     @Query("""
     SELECT r FROM Rental r
     WHERE (:customerId IS NULL OR r.customer.id = :customerId)
-    AND (:placa IS NULL OR r.vehicle.placa = :placa)
-    AND (:status IS NULL OR r.status = :status)
+      AND (:placa IS NULL OR r.vehicle.placa LIKE %:placa%)
+      AND (:status IS NULL OR r.status = :status)
+      AND (:startDate IS NULL OR r.endDate >= :startDate)
+      AND (:endDate IS NULL OR r.endDate <= :endDate)
 """)
     Page<Rental> findByFilters(
             @Param("customerId") Long customerId,
             @Param("placa") String placa,
             @Param("status") RentalStatus status,
-            Pageable pageable
-    );
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable);
+
 
     @Query("""
     SELECT r FROM Rental r
@@ -70,5 +76,34 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
             @Param("data_multa")LocalDate data_multa
             );
 
+    @Query("""
+        SELECT r FROM Rental r
+        WHERE r.vehicle.placa = :placa
+        AND DATE(:momento) BETWEEN r.startDate AND COALESCE(r.returnDate, r.endDate)
+        """)
+    Optional<Rental> findRentalByVehiclePlateAndDateTime(
+            @Param("placa") String placa,
+            @Param("momento") LocalDateTime momento
+    );
+
+    @Query("""
+        SELECT COUNT(r) > 0 FROM Rental r
+        WHERE r.customer.id = :customerId
+        AND r.status IN (:status)
+        """)
+    boolean existsByCustomerIdAndStatusIn(
+            @Param("customerId") Long customerId,
+            @Param("status") List<RentalStatus> status
+    );
+
+    @Query("""
+        SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+        FROM Rental r
+        LEFT JOIN r.payments p
+        WHERE r.customer.id = :customerId
+        AND r.status = com.nozama.aluguel_veiculos.domain.enums.RentalStatus.DEVOLVIDA
+        AND (p.id IS NULL OR p.status = com.nozama.aluguel_veiculos.domain.enums.PaymentStatus.PENDENTE)
+       """)
+    boolean existsDevolvidasNaoPagas(@Param("customerId") Long customerId);
 
 }
